@@ -2,15 +2,18 @@
   "name": "barangay-blotter",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "backend": "node src/app/index.js"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
     "bcryptjs": "^2.4.3",
+    "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "next": "15.1.6",
     "next-auth": "^4.24.11",
