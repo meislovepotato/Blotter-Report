@@ -11,6 +11,9 @@
     "backend": "node src/app/index.js"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.4.2",
     "@prisma/client": "^6.2.1",
     "bcryptjs": "^2.4.3",
     "express": "^4.21.2",
