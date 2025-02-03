@@ -1,20 +1,30 @@
-// filepath: prisma/schema.prisma
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
+
 
 generator client {
   provider = "prisma-client-js"
 }
 
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String
+  email    String  @unique
+  password String
+  role     String  @default("civilian") // Can be "civilian" or "staff"
+}
+
 model Blotter {
-  id          Int      @id @default(autoincrement())
-  type        String
+  id          Int    @id @default(autoincrement())
+  complainant String
+  house_no    Int
+  street      String
   description String
-  address     String
-  fullName    String
-  idPicture   String
-  userId      String
+  attachmentFront String?  // Store file URL
+  attachmentBack  String?  // Store file URL
+  status      String @default("Pending")
   createdAt   DateTime @default(now())
 }
