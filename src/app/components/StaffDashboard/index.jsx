@@ -29,9 +29,24 @@ const StaffDashboard = () => {
       //   const response = await fetch("/api/blotters");
       //   const data = await response.json();
       const data = [
-        { id: 1, complainant: "John Doe", category: "Noise", description: "Loud music at night", status: "Pending" },
-        { id: 2, complainant: "Alice Johnson", category: "Vandalism", description: "Graffiti on wall", status: "Resolved" },
-        { id: 3, complainant: "Charlie Davis", category: "Theft", description: "Stolen bicycle", status: "Pending" },
+        {
+          id: 1,
+          complainant: "John Doe",
+          description: "Loud music at night",
+          status: "Pending",
+        },
+        {
+          id: 2,
+          complainant: "Alice Johnson",
+          description: "Graffiti on wall",
+          status: "Resolved",
+        },
+        {
+          id: 3,
+          complainant: "Charlie Davis",
+          description: "Stolen bicycle",
+          status: "Pending",
+        },
       ];
       setBlotters(data);
     };
@@ -62,10 +77,7 @@ const StaffDashboard = () => {
       </Typography>
       <FormControl fullWidth margin="normal">
         <InputLabel>Status</InputLabel>
-        <Select
-          value={statusFilter}
-          onChange={handleFilterChange}
-        >
+        <Select value={statusFilter} onChange={handleFilterChange}>
           <MenuItem value="All">All</MenuItem>
           <MenuItem value="Pending">Pending</MenuItem>
           <MenuItem value="In Progress">In Progress</MenuItem>
