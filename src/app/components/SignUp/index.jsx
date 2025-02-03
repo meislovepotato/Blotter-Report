@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Container, TextField, Button, Typography, RadioGroup, FormControlLabel, Radio, Box } from "@mui/material";
 
-export default function SignIn({ onSignInSuccess }) {
+export default function SignUp({ onSignInSuccess }) {
   const [formData, setFormData] = useState({ name: "", email: "", address: "", password: "", role: "civilian", staffId: "" });
 
   const handleChange = (e) => {
