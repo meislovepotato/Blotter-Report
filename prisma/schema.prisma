@@ -1,5 +1,4 @@
 
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,11 +9,14 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  name     String
-  email    String  @unique
-  password String
-  role     String  @default("civilian") // Can be "civilian" or "staff"
+  id        Int     @id @default(autoincrement())
+  name      String
+  email     String  @unique
+  address   String
+  password  String
+  role      String  // "civilian" or "staff"
+  staffId   String? // Required for staff
+  createdAt DateTime @default(now())
 }
 
 model Blotter {
