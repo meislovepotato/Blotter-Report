@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Container, TextField, Button, Box, Typography } from "@mui/material";
 import { StyledButton } from "../SignUp/styles";
 
-export default function SignIn({ onSignInSuccess }) {
+const SignIn = ({ onSignInSuccess }) => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -17,6 +17,12 @@ export default function SignIn({ onSignInSuccess }) {
   };
 
   const handleSignIn = async () => {
+    // Check if staffKey is provided
+    if (!formData.staffKey.trim()) {
+      alert("Staff key is required");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -77,3 +83,5 @@ export default function SignIn({ onSignInSuccess }) {
     </Container>
   );
 }
+
+export default SignIn;
