@@ -2,69 +2,93 @@
 
 import { useState } from "react";
 import {
-  AppBar,
-  Toolbar,
   Button,
   Box,
   Typography,
   Container,
+  Modal,
+  IconButton,
 } from "@mui/material";
-import { SignUp, SignIn, BlotterForm, StaffDashboard } from "./components";
+import { BlotterForm, SignIn, SignUp, StaffDashboard } from "./components";
+import CloseIcon from "@mui/icons-material/Close";
+import { ContentContainer, StyledButton, StyledHeader, StyledTypography } from "./styles";
 
 const Page = () => {
-  const [view, setView] = useState(null);
-  const [role, setRole] = useState(null);
-
-  const [isSignedIn, setIsSignedIn] = useState(false);
-
-  const handleSignInSuccess = (role) => {
-    setRole(role);
-  };
+  const [isRoute, setRoute] = useState(false);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [isSignIn, setIsSignIn] = useState(false);
 
   return (
-    <>
-      {/* Header */}
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Blotter Reporting System
-          </Typography>
-          <Button color="inherit" onClick={() => setView("signin")}>
-            Sign In
-          </Button>
-          <Button color="inherit" onClick={() => setView("signup")}>
-            Sign Up
-          </Button>
-        </Toolbar>
-      </AppBar>
+    <Box>
+      <StyledHeader>
+        <StyledTypography onClick={() => setRoute(false)}>
+          Blotter Reporting System
+        </StyledTypography>
+        <StyledButton onClick={() => setModalOpen(true)}>Staff</StyledButton>
+      </StyledHeader>
 
-      {/* Page Content */}
-      <Container sx={{ mt: 4 }}>
-        {role === "civilian" ? (
+      <ContentContainer>
+        {isRoute === true ? (
           <BlotterForm />
-        ) : role === "staff" ? (
-          <StaffDashboard />
         ) : (
           <>
-            <Typography variant="h4" gutterBottom>
+            <Typography sx={{ fontSize: 40, }}>
               Welcome to the Blotter Reporting Page
             </Typography>
-            <Typography variant="body1">
+            <Typography sx={{ fontSize: 23, width: "50%" }}>
               This page allows civilians to report incidents, complaints, and
               other community concerns. Barangay workers will act on these
               reports. You can create an account to submit reports or log in to
               view and manage previous reports.
             </Typography>
-            <Box sx={{ mt: 4 }}>
-              {view === "signin" && (
-                <SignIn onSignInSuccess={handleSignInSuccess} />
-              )}
-              {view === "signup" && <SignUp />}
-            </Box>
+            <StyledButton sx={{ width: "50%" }} onClick={() => setRoute(true)}>
+              Blotter Form
+            </StyledButton>
           </>
         )}
-      </Container>
-    </>
+      </ContentContainer>
+
+      {/* Staff Authentication Modal */}
+      <Modal open={isModalOpen} onClose={() => setModalOpen(false)}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 3,
+            borderRadius: 2,
+          }}
+        >
+          <IconButton
+            sx={{ position: "absolute", top: 10, right: 10 }}
+            onClick={() => setModalOpen(false)}
+          >
+            <CloseIcon />
+          </IconButton>
+          <Typography variant="h5" align="center" gutterBottom>
+            {isSignIn ? "Staff Sign In" : "Staff Sign Up"}
+          </Typography>
+          {isSignIn ? (
+            <SignIn onSignInSuccess={() => setModalOpen(false)} />
+          ) : (
+            <SignUp />
+          )}
+          <Button
+            fullWidth
+            sx={{ mt: 2 }}
+            onClick={() => setIsSignIn((prev) => !prev)}
+          >
+            {isSignIn
+              ? "Create an account"
+              : "Already have an account? Sign in"}
+          </Button>
+        </Box>
+      </Modal>
+    </Box>
   );
 };
 
