@@ -4,7 +4,6 @@ CREATE TABLE `User` (
     `name` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
-    `role` VARCHAR(191) NOT NULL DEFAULT 'civilian',
 
     UNIQUE INDEX `User_email_key`(`email`),
     PRIMARY KEY (`id`)

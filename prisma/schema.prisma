@@ -14,7 +14,6 @@ model User {
   email     String  @unique
   address   String
   password  String
-  role      String  // "civilian" or "staff"
   staffId   String? // Required for staff
   createdAt DateTime @default(now())
 }
