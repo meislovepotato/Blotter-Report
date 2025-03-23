@@ -4,9 +4,6 @@ import {
   TextField,
   Button,
   Typography,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
   Box,
 } from "@mui/material";
 
@@ -14,8 +11,7 @@ export default function SignIn({ onSignInSuccess }) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    role: "civilian",
-    staffkey: "",
+    staffKey: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -41,7 +37,7 @@ export default function SignIn({ onSignInSuccess }) {
       if (response.ok && data.token) {
         localStorage.setItem("token", data.token);
         alert("Sign-in successful!");
-        onSignInSuccess(formData.role);
+        onSignInSuccess();
       } else {
         alert(data.message || "Invalid credentials, please try again.");
       }
@@ -56,28 +52,8 @@ export default function SignIn({ onSignInSuccess }) {
   return (
     <Container maxWidth="sm">
       <Typography variant="h4" gutterBottom>
-        Sign In
+        Barangay Staff Sign In
       </Typography>
-
-      <Box mt={2}>
-        <RadioGroup
-          row
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-        >
-          <FormControlLabel
-            value="civilian"
-            control={<Radio />}
-            label="Civilian"
-          />
-          <FormControlLabel
-            value="staff"
-            control={<Radio />}
-            label="Barangay Staff"
-          />
-        </RadioGroup>
-      </Box>
 
       <form onSubmit={handleSubmit}>
         <TextField
@@ -85,7 +61,6 @@ export default function SignIn({ onSignInSuccess }) {
           label="Email"
           name="email"
           type="email"
-          margin="normal"
           onChange={handleChange}
           value={formData.email}
           required
@@ -95,22 +70,19 @@ export default function SignIn({ onSignInSuccess }) {
           label="Password"
           name="password"
           type="password"
-          margin="normal"
           onChange={handleChange}
           value={formData.password}
           required
         />
-        {formData.role === "staff" && (
-          <TextField
-            fullWidth
-            label="Staff Key"
-            name="staffkey"
-            margin="normal"
-            onChange={handleChange}
-            value={formData.staffkey}
-            required
-          />
-        )}
+        <TextField
+          fullWidth
+          label="Staff Key"
+          name="staffKey"
+          onChange={handleChange}
+          value={formData.staffKey}
+          required
+        />
+
         <Box mt={2}>
           <Button
             type="submit"

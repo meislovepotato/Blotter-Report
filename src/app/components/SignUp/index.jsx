@@ -4,9 +4,6 @@ import {
   TextField,
   Button,
   Typography,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   Box,
 } from "@mui/material";
 
@@ -16,7 +13,6 @@ export default function SignUp({ onSignInSuccess }) {
     email: "",
     address: "",
     password: "",
-    role: "civilian",
     staffId: "",
   });
 
@@ -29,9 +25,8 @@ export default function SignUp({ onSignInSuccess }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validate staffId if role is staff
-    if (formData.role === "staff" && !formData.staffId.trim()) {
-      alert("Staff ID is required for staff role.");
+    if (!formData.staffId.trim()) {
+      alert("Staff ID is required.");
       return;
     }
 
@@ -51,7 +46,6 @@ export default function SignUp({ onSignInSuccess }) {
             email: "",
             address: "",
             password: "",
-            role: "civilian",
             staffId: "",
           });
         } else {
@@ -70,7 +64,7 @@ export default function SignUp({ onSignInSuccess }) {
   return (
     <Container maxWidth="sm">
       <Typography variant="h4" gutterBottom>
-        Sign Up
+        Barangay Staff Sign Up
       </Typography>
       <form onSubmit={handleSubmit}>
         <TextField
@@ -78,7 +72,7 @@ export default function SignUp({ onSignInSuccess }) {
           label="Name"
           name="name"
           value={formData.name}
-          margin="normal"
+          
           onChange={handleChange}
           required
         />
@@ -88,7 +82,7 @@ export default function SignUp({ onSignInSuccess }) {
           name="email"
           type="email"
           value={formData.email}
-          margin="normal"
+          
           onChange={handleChange}
           required
         />
@@ -97,7 +91,7 @@ export default function SignUp({ onSignInSuccess }) {
           label="Address"
           name="address"
           value={formData.address}
-          margin="normal"
+          
           onChange={handleChange}
           required
         />
@@ -107,43 +101,19 @@ export default function SignUp({ onSignInSuccess }) {
           name="password"
           type="password"
           value={formData.password}
-          margin="normal"
+          
           onChange={handleChange}
           required
         />
-
-        <Typography variant="h6" gutterBottom>
-          Sign Up As
-        </Typography>
-        <RadioGroup
-          row
-          name="role"
-          value={formData.role}
+        <TextField
+          fullWidth
+          label="Staff ID Number"
+          name="staffId"
+          value={formData.staffId}
+          
           onChange={handleChange}
-        >
-          <FormControlLabel
-            value="civilian"
-            control={<Radio />}
-            label="Civilian"
-          />
-          <FormControlLabel
-            value="staff"
-            control={<Radio />}
-            label="Barangay Staff"
-          />
-        </RadioGroup>
-
-        {formData.role === "staff" && (
-          <TextField
-            fullWidth
-            label="Staff ID Number"
-            name="staffId"
-            value={formData.staffId}
-            margin="normal"
-            onChange={handleChange}
-            required
-          />
-        )}
+          required
+        />
 
         <Box mt={2}>
           <Button

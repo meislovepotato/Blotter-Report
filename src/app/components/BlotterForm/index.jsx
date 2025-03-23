@@ -70,7 +70,6 @@ const BlotterForm = () => {
           fullWidth
           label="Complainant Name"
           name="complainant"
-          margin="normal"
           onChange={handleChange}
           required
         />
@@ -78,7 +77,6 @@ const BlotterForm = () => {
           fullWidth
           label="House Number"
           name="houseNumber"
-          margin="normal"
           onChange={handleChange}
           required
           type="number" // Ensures only numbers are entered
@@ -93,7 +91,7 @@ const BlotterForm = () => {
             }
           }}
         />
-        <FormControl fullWidth margin="normal">
+        <FormControl fullWidth>
           <InputLabel>Street</InputLabel>
           <Select
             name="street"
@@ -114,16 +112,17 @@ const BlotterForm = () => {
           name="description"
           multiline
           rows={4}
-          margin="normal"
           onChange={handleChange}
           required
         />
         <TextField
-          label="Phone Number (Optional)"
+          label="Phone Number"
           name="phoneNumber"
-          type="tel"
+          type="number"
           fullWidth
           sx={{ mt: 2, mb: 2 }}
+          required
+          onChange={handleChange}
         />
         <Typography variant="body1" gutterBottom>
           Attach Barangay ID (Front and Back):

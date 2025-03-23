@@ -11,7 +11,6 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Button,
   FormControl,
   InputLabel,
   Select,
@@ -75,7 +74,7 @@ const StaffDashboard = () => {
       <Typography variant="h4" gutterBottom>
         Blotter Reports
       </Typography>
-      <FormControl fullWidth margin="normal">
+      <FormControl fullWidth>
         <InputLabel>Status</InputLabel>
         <Select value={statusFilter} onChange={handleFilterChange}>
           <MenuItem value="All">All</MenuItem>
