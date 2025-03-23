@@ -1,11 +1,6 @@
 import { useState } from "react";
-import {
-  Container,
-  TextField,
-  Button,
-  Typography,
-  Box,
-} from "@mui/material";
+import { Container, TextField, Button, Box, Typography } from "@mui/material";
+import { StyledButton } from "../SignUp/styles";
 
 export default function SignIn({ onSignInSuccess }) {
   const [formData, setFormData] = useState({
@@ -21,8 +16,7 @@ export default function SignIn({ onSignInSuccess }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSignIn = async () => {
     setLoading(true);
 
     try {
@@ -35,7 +29,7 @@ export default function SignIn({ onSignInSuccess }) {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("token", data.token); // Save the JWT token
         alert("Sign-in successful!");
         onSignInSuccess();
       } else {
@@ -51,13 +45,8 @@ export default function SignIn({ onSignInSuccess }) {
 
   return (
     <Container maxWidth="sm">
-      <Typography variant="h4" gutterBottom>
-        Barangay Staff Sign In
-      </Typography>
-
-      <form onSubmit={handleSubmit}>
+      <Box display="flex" flexDirection="column" gap={2}>
         <TextField
-          fullWidth
           label="Email"
           name="email"
           type="email"
@@ -66,7 +55,6 @@ export default function SignIn({ onSignInSuccess }) {
           required
         />
         <TextField
-          fullWidth
           label="Password"
           name="password"
           type="password"
@@ -75,7 +63,6 @@ export default function SignIn({ onSignInSuccess }) {
           required
         />
         <TextField
-          fullWidth
           label="Staff Key"
           name="staffKey"
           onChange={handleChange}
@@ -83,18 +70,10 @@ export default function SignIn({ onSignInSuccess }) {
           required
         />
 
-        <Box mt={2}>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            disabled={loading}
-          >
-            {loading ? "Signing In..." : "Sign In"}
-          </Button>
-        </Box>
-      </form>
+        <StyledButton onClick={handleSignIn} disabled={loading}>
+          {loading ? "Signing In..." : "Sign In"}
+        </StyledButton>
+      </Box>
     </Container>
   );
 }

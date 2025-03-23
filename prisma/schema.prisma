@@ -14,7 +14,7 @@ model User {
   email     String  @unique
   address   String
   password  String
-  staffId   String? // Required for staff
+  staffId   String? @unique
   createdAt DateTime @default(now())
 }
 

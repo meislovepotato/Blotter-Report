@@ -1,17 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { Box, Typography } from "@mui/material";
+import { AuthModal, BlotterForm } from "./components";
 import {
-  Button,
-  Box,
-  Typography,
-  Container,
-  Modal,
-  IconButton,
-} from "@mui/material";
-import { BlotterForm, SignIn, SignUp, StaffDashboard } from "./components";
-import CloseIcon from "@mui/icons-material/Close";
-import { ContentContainer, StyledButton, StyledHeader, StyledTypography } from "./styles";
+  ContentContainer,
+  StyledButton,
+  StyledHeader,
+  StyledTypography,
+} from "./styles";
 
 const Page = () => {
   const [isRoute, setRoute] = useState(false);
@@ -32,7 +29,7 @@ const Page = () => {
           <BlotterForm />
         ) : (
           <>
-            <Typography sx={{ fontSize: 40, }}>
+            <Typography sx={{ fontSize: 40 }}>
               Welcome to the Blotter Reporting Page
             </Typography>
             <Typography sx={{ fontSize: 23, width: "50%" }}>
@@ -49,45 +46,13 @@ const Page = () => {
       </ContentContainer>
 
       {/* Staff Authentication Modal */}
-      <Modal open={isModalOpen} onClose={() => setModalOpen(false)}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 400,
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 3,
-            borderRadius: 2,
-          }}
-        >
-          <IconButton
-            sx={{ position: "absolute", top: 10, right: 10 }}
-            onClick={() => setModalOpen(false)}
-          >
-            <CloseIcon />
-          </IconButton>
-          <Typography variant="h5" align="center" gutterBottom>
-            {isSignIn ? "Staff Sign In" : "Staff Sign Up"}
-          </Typography>
-          {isSignIn ? (
-            <SignIn onSignInSuccess={() => setModalOpen(false)} />
-          ) : (
-            <SignUp />
-          )}
-          <Button
-            fullWidth
-            sx={{ mt: 2 }}
-            onClick={() => setIsSignIn((prev) => !prev)}
-          >
-            {isSignIn
-              ? "Create an account"
-              : "Already have an account? Sign in"}
-          </Button>
-        </Box>
-      </Modal>
+      <AuthModal
+        open={isModalOpen}
+        isSignIn={isSignIn}
+        setIsSignIn={setIsSignIn}
+        onClose={() => setModalOpen(false)}
+      />
+
     </Box>
   );
 };
