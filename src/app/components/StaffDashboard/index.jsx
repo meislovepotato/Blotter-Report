@@ -29,40 +29,14 @@ const StaffDashboard = () => {
   const [selectedBlotter, setSelectedBlotter] = useState(null);
 
   useEffect(() => {
-    // Fetch blotter reports from API
     const fetchBlotters = async () => {
-      // Replace with actual API call
-      const data = [
-        {
-          id: 1,
-          complainant: "MJ Fernandez",
-          description: "Drunk guy on rampage causing chaos in the street.",
-          status: "Pending",
-          address:
-            "B1 Lot 13 Baltao Subd. Brgy. Sta Cruz Purok Sampaguita, Antipolo City",
-          phoneNumber: "09171234567",
-          otherContacts: "MJ Fernandez (FB)",
-        },
-        {
-          id: 2,
-          complainant: "Alice Johnson",
-          description: "Graffiti on wall",
-          status: "Resolved",
-          address: "B3 Lot 5, Barangay San Isidro, Antipolo City",
-          phoneNumber: "09159876543",
-          otherContacts: "Alice Johnson (Email)",
-        },
-        {
-          id: 3,
-          complainant: "Charlie Davis",
-          description: "Stolen bicycle",
-          status: "Pending",
-          address: "Blk 4 Lot 2, Barangay San Juan, Antipolo City",
-          phoneNumber: "09172345678",
-          otherContacts: "Charlie Davis (Phone)",
-        },
-      ];
-      setBlotters(data);
+      try {
+        const response = await fetch("/api/dashboard"); // Adjust the API path as needed
+        const data = await response.json();
+        setBlotters(data);
+      } catch (error) {
+        console.error("Error fetching blotters:", error);
+      }
     };
     fetchBlotters();
   }, []);
@@ -112,6 +86,7 @@ const StaffDashboard = () => {
           <TableHead>
             <TableRow>
               <TableCell>Complainant</TableCell>
+              <TableCell>Category</TableCell>
               <TableCell>Description</TableCell>
               <TableCell>Address</TableCell>
               <TableCell>Status</TableCell>
@@ -122,28 +97,26 @@ const StaffDashboard = () => {
             {filteredBlotters.map((blotter) => (
               <TableRow key={blotter.id}>
                 <TableCell>{blotter.complainant}</TableCell>
+                <TableCell>{blotter.category}</TableCell>
                 <TableCell>{blotter.description}</TableCell>
                 <TableCell>{blotter.address}</TableCell>
                 <TableCell>{blotter.status}</TableCell>
                 <TableCell>
-                  <FormControl fullWidth>
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      value={blotter.status}
-                      onChange={(event) =>
-                        handleStatusChange(blotter.id, event.target.value)
-                      }
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          border: "none", // Removes the border line of the select box
-                        },
-                      }}
-                    >
-                      <MenuItem value="Pending">Pending</MenuItem>
-                      <MenuItem value="In Progress">In Progress</MenuItem>
-                      <MenuItem value="Resolved">Resolved</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <Select
+                    value={blotter.status}
+                    onChange={(event) =>
+                      handleStatusChange(blotter.id, event.target.value)
+                    }
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        border: "none", // Removes the border line of the select box
+                      },
+                    }}
+                  >
+                    <MenuItem value="Pending">Pending</MenuItem>
+                    <MenuItem value="In Progress">In Progress</MenuItem>
+                    <MenuItem value="Resolved">Resolved</MenuItem>
+                  </Select>
                 </TableCell>
                 <TableCell>
                   <Button
@@ -160,7 +133,7 @@ const StaffDashboard = () => {
         </Table>
       </TableContainer>
 
-      {/* Dialog to show blotter details */}
+      {/* Blotter Details Dialog */}
       {selectedBlotter && (
         <Dialog open={openDialog} onClose={handleCloseDialog}>
           <DialogTitle>Blotter Details</DialogTitle>
@@ -169,20 +142,35 @@ const StaffDashboard = () => {
               Complainant: {selectedBlotter.complainant}
             </Typography>
             <Typography variant="body1">
+              Category: {selectedBlotter.category}
+            </Typography>
+            <Typography variant="body1">
               Description: {selectedBlotter.description}
             </Typography>
             <Typography variant="body1">
               Address: {selectedBlotter.address}
             </Typography>
             <Typography variant="body1">
-              Phone: {selectedBlotter.phoneNumber}
-            </Typography>
-            <Typography variant="body1">
-              Other Contacts: {selectedBlotter.otherContacts}
-            </Typography>
-            <Typography variant="body1">
               Status: {selectedBlotter.status}
             </Typography>
+
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              Attachments:
+            </Typography>
+            {selectedBlotter.attachmentFront && (
+              <img
+                src={`data:image/png;base64,${selectedBlotter.attachmentFront}`}
+                alt="Attachment Front"
+                style={{ width: "100%", maxHeight: 300, objectFit: "contain" }}
+              />
+            )}
+            {selectedBlotter.attachmentBack && (
+              <img
+                src={`data:image/png;base64,${selectedBlotter.attachmentBack}`}
+                alt="Attachment Back"
+                style={{ width: "100%", maxHeight: 300, objectFit: "contain" }}
+              />
+            )}
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog} color="primary">

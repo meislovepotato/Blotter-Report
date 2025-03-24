@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Container, TextField, Box } from "@mui/material";
+import { Container, TextField, Box, InputAdornment, IconButton } from "@mui/material";
 import { StyledButton } from "./styles";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const Signup = ({ onSignInSuccess }) => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ const Signup = ({ onSignInSuccess }) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -65,7 +67,23 @@ const Signup = ({ onSignInSuccess }) => {
         <TextField label="Name" name="name" value={formData.name} onChange={handleChange} required />
         <TextField label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required />
         <TextField label="Address" name="address" value={formData.address} onChange={handleChange} required />
-        <TextField label="Password" name="password" type="password" value={formData.password} onChange={handleChange} required />
+        <TextField
+          label="Password"
+          name="password"
+          type={showPassword ? "text" : "password"}
+          value={formData.password}
+          onChange={handleChange}
+          required
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={() => setShowPassword((prev) => !prev)}>
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
         <TextField label="Staff ID Number" name="staffId" value={formData.staffId} onChange={handleChange} />
 
         {error && <p style={{ color: "red" }}>{error}</p>}

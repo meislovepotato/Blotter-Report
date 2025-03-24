@@ -8,14 +8,20 @@ import {
   Typography,
   Card,
   CardContent,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { StyledButton } from "./styles";
+import { CATEGORIES } from "./categories";
 
 const BlotterForm = () => {
   const [formData, setFormData] = useState({
     complainant: "",
     fullAddress: "",
     description: "",
+    category: "",
     phoneNumber: "",
     otherContacts: "",
     attachmentFront: null,
@@ -51,7 +57,7 @@ const BlotterForm = () => {
   const handleFileChange = (e) => {
     const { name, files } = e.target;
     const file = files[0];
-    
+
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -132,6 +138,21 @@ const BlotterForm = () => {
               required
               sx={{ mb: 2 }}
             />
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Category</InputLabel>
+              <Select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                required
+              >
+                {CATEGORIES.map((category) => (
+                  <MenuItem key={category} value={category}>
+                    {category}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               label="Phone Number (e.g., 09xxxxxxxxx or +639xxxxxxxxx)"
               name="phoneNumber"
@@ -144,7 +165,7 @@ const BlotterForm = () => {
               helperText={phoneHelperText}
               sx={{ mb: 2 }}
             />
-            <Typography variant="body1" gutterBottom>
+            <Typography variant="standard" >
               Attach Proof of Address (e.g., Barangay ID, National ID, Passport,
               Utility Bill, etc.):
             </Typography>

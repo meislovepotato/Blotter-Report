@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Container, TextField, Button, Box, Typography } from "@mui/material";
+import { Container, TextField, Button, Box, Typography, InputAdornment, IconButton } from "@mui/material";
 import { StyledButton } from "../SignUp/styles";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const SignIn = ({ onSignInSuccess }) => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ const SignIn = ({ onSignInSuccess }) => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -63,10 +65,19 @@ const SignIn = ({ onSignInSuccess }) => {
         <TextField
           label="Password"
           name="password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           onChange={handleChange}
           value={formData.password}
           required
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={() => setShowPassword((prev) => !prev)}>
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
         <TextField
           label="Staff Key"

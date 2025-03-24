@@ -24,8 +24,9 @@ model Blotter {
   fullAddress String
   description String
   phoneNumber String
-  attachmentFront Bytes // Store file URL
-  attachmentBack  Bytes // Store file URL
+  attachmentFront Bytes // Use Bytes to store encrypted data
+  attachmentBack  Bytes 
+  category    String
   status      String @default("Pending")
   createdAt   DateTime @default(now())
 }

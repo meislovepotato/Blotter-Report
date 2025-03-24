@@ -5,7 +5,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { SignIn, SignUp } from "./components";
 import { InputBox } from "./styles";
 
-const AuthModal = ({ isSignIn, setIsSignIn, open, onClose }) => {
+const AuthModal = ({ isSignIn, setIsSignIn, open, onClose, onSignInSuccess }) => {
   return (
     <Modal open={open} onClose={onClose}>
       <InputBox>
@@ -19,7 +19,7 @@ const AuthModal = ({ isSignIn, setIsSignIn, open, onClose }) => {
           {isSignIn ? "Sign In" : "Sign Up"}
         </Typography>
         {isSignIn ? (
-          <SignIn onSignInSuccess={onClose} />
+          <SignIn onSignInSuccess={onSignInSuccess} />
         ) : (
           <SignUp onSignInSuccess={onClose} />
         )}
