@@ -1,5 +1,5 @@
 import express from "express";
-import handler from "./api/blotter.js";
+import handler from "./api/blotter/route.js";
 
 const app = express();
 

@@ -6,38 +6,60 @@ import {
   TextField,
   Button,
   Typography,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
+  Card,
+  CardContent,
 } from "@mui/material";
-import streets from "./streets";
+import { StyledButton } from "./styles";
 
 const BlotterForm = () => {
   const [formData, setFormData] = useState({
     complainant: "",
-    street: "",
+    fullAddress: "",
     description: "",
     phoneNumber: "",
+    otherContacts: "",
     attachmentFront: null,
     attachmentBack: null,
-    previewFront: null,
-    previewBack: null,
+    previewFront: null, // Added for previewing the front attachment
+    previewBack: null, // Added for previewing the back attachment
   });
+  const [phoneError, setPhoneError] = useState(false);
+  const [phoneHelperText, setPhoneHelperText] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handlePhoneChange = (e) => {
+    const { value } = e.target;
+    setFormData({ ...formData, phoneNumber: value });
+
+    const phonePattern = /^(09\d{9}|\+639\d{9})$/;
+    if (!phonePattern.test(value)) {
+      setPhoneError(true);
+      setPhoneHelperText(
+        "Invalid phone number. Please use the correct format (e.g., 09171234567 or +639171234567)."
+      );
+    } else {
+      setPhoneError(false);
+      setPhoneHelperText("");
+    }
   };
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
     const file = files[0];
+    
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
+        console.log("File loaded:", event.target.result);
+        console.log("File name:", name);
         setFormData({
           ...formData,
-          [name]: file,
+          [name]: event.target.result,
           [name === "attachmentFront" ? "previewFront" : "previewBack"]:
             event.target.result,
         });
@@ -45,141 +67,143 @@ const BlotterForm = () => {
       reader.readAsDataURL(file);
     }
   };
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const form = event.target.form;
-    const attachmentFront = form.elements["attachmentFront"].files.length;
-    const attachmentBack = form.elements["attachmentBack"].files.length;
 
-    if (!attachmentFront || !attachmentBack) {
-      alert("Please upload both front and back ID.");
-      return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    setLoading(true);
+
+    console.log("Submitting form data:", formData);
+
+    const response = await fetch("/api/blotter", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData), // Send the data (including Base64 files) to the backend
+    });
+
+    if (response.ok) {
+      alert("Blotter submitted successfully!");
+    } else {
+      const errorData = await response.json();
+      alert(`Error: ${errorData.error}`);
     }
-
-    // Proceed with form submission
-    form.submit();
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Blotter Report Form
-      </Typography>
-      <form onSubmit={handleSubmit}>
-        <TextField
-          fullWidth
-          label="Complainant Name"
-          name="complainant"
-          onChange={handleChange}
-          required
-        />
-        <TextField
-          fullWidth
-          label="House Number"
-          name="houseNumber"
-          onChange={handleChange}
-          required
-          type="number" // Ensures only numbers are entered
-          InputProps={{
-            inputMode: "numeric",
-            pattern: "[0-9]*",
-          }}
-          onInput={(e) => {
-            // Prevent the negative sign from being entered
-            if (e.target.value && e.target.value[0] === "-") {
-              e.target.value = e.target.value.replace("-", "");
-            }
-          }}
-        />
-        <FormControl fullWidth>
-          <InputLabel>Street</InputLabel>
-          <Select
-            name="street"
-            value={formData.street}
-            onChange={handleChange}
-            required
-          >
-            {streets.map((street) => (
-              <MenuItem key={street} value={street}>
-                {street}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <TextField
-          fullWidth
-          label="Incident Description"
-          name="description"
-          multiline
-          rows={4}
-          onChange={handleChange}
-          required
-        />
-        <TextField
-          label="Phone Number"
-          name="phoneNumber"
-          type="number"
-          fullWidth
-          sx={{ mt: 2, mb: 2 }}
-          required
-          onChange={handleChange}
-        />
-        <Typography variant="body1" gutterBottom>
-          Attach Barangay ID (Front and Back):
-        </Typography>
-        <Button
-          variant="outlined"
-          component="label"
-          sx={{ mt: 1, mb: 1, width: "100%" }}
-        >
-          Upload Front ID
-          <input
-            type="file"
-            name="attachmentFront"
-            accept="image/*"
-            hidden
-            onChange={handleFileChange}
-          />
-        </Button>
-        {formData.previewFront && (
-          <img
-            src={formData.previewFront}
-            alt="Front ID Preview"
-            style={{ width: "100%", marginBottom: "1rem" }}
-          />
-        )}
-        <Button
-          variant="outlined"
-          component="label"
-          sx={{ mt: 1, mb: 2, width: "100%" }}
-        >
-          Upload Back ID
-          <input
-            type="file"
-            name="attachmentBack"
-            accept="image/*"
-            hidden
-            onChange={handleFileChange}
-          />
-        </Button>
-        {formData.previewBack && (
-          <img
-            src={formData.previewBack}
-            alt="Back ID Preview"
-            style={{ width: "100%", marginBottom: "1rem" }}
-          />
-        )}
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          fullWidth
-          sx={{ mt: 2 }}
-          onClick={handleSubmit}
-        >
-          Submit Report
-        </Button>
-      </form>
+    <Container maxWidth="sm">
+      <Card
+        sx={{
+          backgroundColor: "white",
+          boxShadow: 3,
+          padding: 2,
+          borderRadius: 5,
+        }}
+      >
+        <CardContent>
+          <Typography variant="h4" gutterBottom>
+            Blotter Report Form
+          </Typography>
+          <form onSubmit={handleSubmit}>
+            <TextField
+              fullWidth
+              label="Complainant Name"
+              name="complainant"
+              onChange={handleChange}
+              required
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Full Address (e.g., Block/Lot/Street/Subd, Barangay, City)"
+              name="fullAddress"
+              onChange={handleChange}
+              required
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Incident Description"
+              name="description"
+              multiline
+              rows={4}
+              onChange={handleChange}
+              required
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              label="Phone Number (e.g., 09xxxxxxxxx or +639xxxxxxxxx)"
+              name="phoneNumber"
+              type="tel"
+              fullWidth
+              required
+              onChange={handlePhoneChange}
+              value={formData.phoneNumber}
+              error={phoneError}
+              helperText={phoneHelperText}
+              sx={{ mb: 2 }}
+            />
+            <Typography variant="body1" gutterBottom>
+              Attach Proof of Address (e.g., Barangay ID, National ID, Passport,
+              Utility Bill, etc.):
+            </Typography>
+            <Button
+              variant="outlined"
+              component="label"
+              sx={{ mt: 1, mb: 1, width: "100%" }}
+            >
+              Upload Front Proof
+              <input
+                type="file"
+                name="attachmentFront"
+                accept="image/*"
+                hidden
+                onChange={handleFileChange}
+              />
+            </Button>
+            {formData.previewFront && (
+              <img
+                src={formData.previewFront}
+                alt="Front Proof Preview"
+                style={{ width: "100%", marginBottom: "1rem" }}
+              />
+            )}
+            <Button
+              variant="outlined"
+              component="label"
+              sx={{ mt: 1, mb: 2, width: "100%" }}
+            >
+              Upload Back Proof
+              <input
+                type="file"
+                name="attachmentBack"
+                accept="image/*"
+                hidden
+                onChange={handleFileChange}
+              />
+            </Button>
+            {formData.previewBack && (
+              <img
+                src={formData.previewBack}
+                alt="Back Proof Preview"
+                style={{ width: "100%", marginBottom: "1rem" }}
+              />
+            )}
+            <TextField
+              fullWidth
+              label="Other Contacts (e.g.,Facebook)(Optional)"
+              name="otherContacts"
+              onChange={handleChange}
+              value={formData.otherContacts}
+              sx={{ mb: 2 }}
+            />
+            <StyledButton type="submit">
+              {loading ? "Submitting..." : "Submit Report"}
+            </StyledButton>
+          </form>
+        </CardContent>
+      </Card>
     </Container>
   );
 };

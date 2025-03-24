@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Box, Typography } from "@mui/material";
-import { AuthModal, BlotterForm } from "./components";
+import { AuthModal, BlotterForm, StaffDashboard } from "./components";
 import {
   ContentContainer,
   StyledButton,

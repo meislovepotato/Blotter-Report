@@ -21,11 +21,11 @@ model User {
 model Blotter {
   id          Int    @id @default(autoincrement())
   complainant String
-  house_no    Int
-  street      String
+  fullAddress String
   description String
-  attachmentFront String?  // Store file URL
-  attachmentBack  String?  // Store file URL
+  phoneNumber String
+  attachmentFront Bytes // Store file URL
+  attachmentBack  Bytes // Store file URL
   status      String @default("Pending")
   createdAt   DateTime @default(now())
 }
