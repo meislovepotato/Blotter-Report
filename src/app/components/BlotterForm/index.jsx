@@ -98,7 +98,7 @@ const BlotterForm = () => {
   };
 
   return (
-    <Container maxWidth="sm">
+    <Container maxWidth="sm" sx={{ m: 5, height: "auto" }}>
       <Card
         sx={{
           backgroundColor: "white",
@@ -108,7 +108,7 @@ const BlotterForm = () => {
         }}
       >
         <CardContent>
-          <Typography variant="h4" gutterBottom>
+          <Typography variant="h4" gutterBottom sx={{ color: "black" }}>
             Blotter Report Form
           </Typography>
           <form onSubmit={handleSubmit}>
@@ -165,14 +165,14 @@ const BlotterForm = () => {
               helperText={phoneHelperText}
               sx={{ mb: 2 }}
             />
-            <Typography variant="standard" >
+            <Typography variant="standard" sx={{ color: "black" }}>
               Attach Proof of Address (e.g., Barangay ID, National ID, Passport,
               Utility Bill, etc.):
             </Typography>
             <Button
               variant="outlined"
               component="label"
-              sx={{ mt: 1, mb: 1, width: "100%" }}
+              sx={{ mt: 1, mb: 1, width: "100%", color: "black" }}
             >
               Upload Front Proof
               <input
@@ -193,7 +193,7 @@ const BlotterForm = () => {
             <Button
               variant="outlined"
               component="label"
-              sx={{ mt: 1, mb: 2, width: "100%" }}
+              sx={{ mt: 1, mb: 2, width: "100%", color: "black" }}
             >
               Upload Back Proof
               <input

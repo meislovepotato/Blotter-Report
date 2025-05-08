@@ -1,4 +1,5 @@
 import { Box, styled, Typography } from "@mui/material";
+import { BarangayLogo } from "./components/images/index";
 
 export const Container = styled(Box)(() => ({
   display: "flex",
@@ -14,43 +15,33 @@ export const StyledHeader = styled(Box)(({ theme }) => ({
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
-  background: theme.palette.grey.dark,
-  color: "#87CEFA",
+  background: theme.palette.green.main,
   height: 60,
   width: "100%",
   padding: "0 10px",
   marginBottom: 40,
 }));
 
+export const HeaderLogo = ({ sizefactor = 0.7 }) => (
+  <BarangayLogo width={100 * sizefactor} height={90 * sizefactor} />
+);
+
 export const StyledTypography = styled(Typography)(({ theme }) => ({
   cursor: "pointer",
-  color: theme.palette.blue.main,
+  color: "white",
   fontSize: 25,
   fontWeight: 700,
-  // animation
-  background: "linear-gradient(to right, #2196f3, #1e88e5, #87CEFA)",
-  backgroundSize: "200% 100%", // Ensure the gradient is large enough to move
-  WebkitBackgroundClip: "text", // For Webkit browsers (Chrome, Safari)
-  WebkitTextFillColor: "transparent", // Make text transparent so the gradient is visible
-  "&:hover": {
-    animation: "moveGradient 3s linear infinite", // Keep animation on hover
-  },
 }));
 
 export const StyledButton = styled("button")(({ theme }) => ({
-  background: theme.palette.blue.main,
-  color: "#fff",
-  fontSize: 20,
-  border: `1px solid ${theme.palette.blue.light}`,
+  background: "white",
+  color: theme.palette.green.main,
+  fontSize: 21,
+  border: `1px solid ${theme.palette.green.main}`,
   borderRadius: 5,
   cursor: "pointer",
   height: 40,
   width: 100,
-  "&:hover": {
-    background: "linear-gradient(to right, #2196f3, #1e88e5, #87CEFA)",
-    backgroundSize: "200% 100%", // Ensure the gradient is large enough to move
-    animation: "moveGradient 3s linear infinite", // Keep animation on hover
-  },
 }));
 
 export const ContentContainer = styled(Box)(() => ({
@@ -59,4 +50,31 @@ export const ContentContainer = styled(Box)(() => ({
   justifyContent: "center",
   alignItems: "center",
   gap: 30,
+}));
+
+export const BackgroundContainer = styled(Box)(({ theme }) => ({
+  position: "relative",
+  width: "100%",
+  minHeight: "100vh",
+  overflow: "hidden",
+
+  "&::before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: 'url("/background.jpg")', // replace with your path
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    opacity: 1, // control image opacity here
+    zIndex: 1,
+  },
+
+  // Make sure content appears on top
+  "> *": {
+    position: "relative",
+    zIndex: 1,
+  },
 }));

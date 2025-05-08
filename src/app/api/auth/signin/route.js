@@ -9,7 +9,7 @@ export async function POST(request) {
 
     // Check if staffKey is provided
     if (!staffKey) {
-      return NextResponse.json({ message: "Staff key is required" }, { status: 400 });
+      return NextResponse.json({ message: "Admin key is required" }, { status: 400 });
     }
     
     // Check if the user exists
@@ -20,7 +20,7 @@ export async function POST(request) {
 
     // Check if staffKey matches the stored staffId
     if (user.staffId !== staffKey) {
-      return NextResponse.json({ message: "Invalid staff key" }, { status: 401 });
+      return NextResponse.json({ message: "Invalid Admin key" }, { status: 401 });
     }
 
     // Validate password

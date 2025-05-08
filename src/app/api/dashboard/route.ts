@@ -40,21 +40,3 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
-const handleStatusChange = async (id, newStatus) => {
-  setBlotters((prevBlotters) =>
-    prevBlotters.map((blotter) =>
-      blotter.id === id ? { ...blotter, status: newStatus } : blotter
-    )
-  );
-
-  try {
-    await fetch(`/api/blotters/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-  } catch (error) {
-    console.error("Failed to update status", error);
-  }
-};

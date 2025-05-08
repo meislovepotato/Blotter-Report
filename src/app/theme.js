@@ -18,6 +18,9 @@ const theme = createTheme({
       animation: "linear-gradient(to right, #2196f3, #1e88e5, #87CEFA)",
       light: '#ADD8E6',
     },
+    green: {
+      main: "rgb(149, 189, 151)",
+    },
     grey: {
       dark: "#222222",
     },
@@ -27,7 +30,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           fontFamily: interFontFamily,
-          color: '#222222',
+          color: 'black',
         },
       },
     },
@@ -35,14 +38,14 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           fontFamily: interFontFamily,
-          color: '#222222',
+          color: 'black',
         },
       },
     },
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          background: "linear-gradient(to bottom right, #ADD8E6, #87CEFA, #ADD8E6)", // Set gradient background
+          background: "linear-gradient(to right, #66bb6a, #4fc3f7, #1976d2)", // Set gradient background
           color: "#fff",
           minHeight: "100vh",
           margin: 0,
