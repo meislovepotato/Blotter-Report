@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Box, Typography } from "@mui/material";
-import { AuthModal, BlotterForm, StaffDashboard } from "./components";
+import { AuthModal, BlotterForm, AdminDashboard } from "./components";
 import {
   ContentContainer,
   HeaderLogo,
@@ -71,7 +71,7 @@ const Page = () => {
         <BlotterForm />
       </ContentContainer>
 
-      {/* Staff Authentication Modal */}
+      {/* Admin Authentication Modal */}
       <AuthModal
         open={isModalOpen}
         isSignIn={isSignIn}
@@ -80,7 +80,7 @@ const Page = () => {
         onSignInSuccess={handleSignInSuccess}
       />
 
-      {isAuthenticated ? <StaffDashboard /> : null}
+      {isAuthenticated ? <AdminDashboard /> : null}
     </Box>
   );
 };

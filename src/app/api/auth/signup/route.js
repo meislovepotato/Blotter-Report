@@ -4,10 +4,10 @@ import prisma from "../../../../lib/prisma";
 
 export async function POST(request) {
   try {
-    const { name, email, address, password, staffId } = await request.json();
+    const { name, email, address, password, adminId } = await request.json();
 
     // Validate required fields
-    if (!name || !email || !address || !password || !staffId) {
+    if (!name || !email || !address || !password || !adminId) {
       return NextResponse.json(
         { message: "All fields are required." },
         { status: 400 }
@@ -32,12 +32,12 @@ export async function POST(request) {
       );
     }
 
-    const existingStaffId = await prisma.user.findUnique({
-      where: { staffId },
+    const existingadminId = await prisma.user.findUnique({
+      where: { adminId },
     });
-    if (existingStaffId) {
+    if (existingadminId) {
       return NextResponse.json(
-        { message: "staffID is already in use." },
+        { message: "adminID is already in use." },
         { status: 400 }
       );
     }
@@ -52,7 +52,7 @@ export async function POST(request) {
         email,
         address,
         password: hashedPassword,
-        staffId,
+        adminId,
       },
     });
 

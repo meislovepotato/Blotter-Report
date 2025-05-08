@@ -7,7 +7,7 @@ const SignIn = ({ onSignInSuccess }) => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    staffKey: "",
+    adminKey: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -19,9 +19,9 @@ const SignIn = ({ onSignInSuccess }) => {
   };
 
   const handleSignIn = async () => {
-    // Check if staffKey is provided
-    if (!formData.staffKey.trim()) {
-      alert("Staff key is required");
+    // Check if adminKey is provided
+    if (!formData.adminKey.trim()) {
+      alert("admin key is required");
       return;
     }
 
@@ -80,10 +80,10 @@ const SignIn = ({ onSignInSuccess }) => {
           }}
         />
         <TextField
-          label="Staff Key"
-          name="staffKey"
+          label="admin Key"
+          name="adminKey"
           onChange={handleChange}
-          value={formData.staffKey}
+          value={formData.adminKey}
           required
         />
 

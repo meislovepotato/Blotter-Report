@@ -25,7 +25,7 @@ import {
   Box,
 } from "@mui/material";
 
-const StaffDashboard = () => {
+const AdminDashboard = () => {
   const [blotters, setBlotters] = useState([]);
   const [statusFilter, setStatusFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -228,4 +228,4 @@ const StaffDashboard = () => {
   );
 };
 
-export default StaffDashboard;
+export default AdminDashboard;

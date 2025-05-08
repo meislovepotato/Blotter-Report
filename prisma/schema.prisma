@@ -14,7 +14,7 @@ model User {
   email     String  @unique
   address   String
   password  String
-  staffId   String? @unique
+  adminId   String? @unique
   createdAt DateTime @default(now())
 }
 

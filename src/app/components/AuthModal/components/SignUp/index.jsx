@@ -9,7 +9,7 @@ const Signup = ({ onSignInSuccess }) => {
     email: "",
     address: "",
     password: "",
-    staffId: "",
+    adminId: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,8 +24,8 @@ const Signup = ({ onSignInSuccess }) => {
     setIsSubmitting(true);
     setError("");
 
-    if (!formData.name || !formData.email || !formData.address || !formData.password || !formData.staffId) {
-      setError("All fields, including Staff ID, are required.");
+    if (!formData.name || !formData.email || !formData.address || !formData.password || !formData.adminId) {
+      setError("All fields, including admin ID, are required.");
       setIsSubmitting(false);
       return;
     }
@@ -49,7 +49,7 @@ const Signup = ({ onSignInSuccess }) => {
         email: "",
         address: "",
         password: "",
-        staffId: "",
+        adminId: "",
       });
 
       if (onSignInSuccess) onSignInSuccess(); // Close modal after sign-up
@@ -84,7 +84,7 @@ const Signup = ({ onSignInSuccess }) => {
             ),
           }}
         />
-        <TextField label="Staff ID Number" name="staffId" value={formData.staffId} onChange={handleChange} />
+        <TextField label="admin ID Number" name="adminId" value={formData.adminId} onChange={handleChange} />
 
         {error && <p style={{ color: "red" }}>{error}</p>}
 

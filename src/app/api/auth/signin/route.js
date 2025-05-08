@@ -5,10 +5,10 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
-    const { email, password, staffKey } = await request.json();
+    const { email, password, adminKey } = await request.json();
 
-    // Check if staffKey is provided
-    if (!staffKey) {
+    // Check if adminKey is provided
+    if (!adminKey) {
       return NextResponse.json({ message: "Admin key is required" }, { status: 400 });
     }
     
@@ -18,8 +18,8 @@ export async function POST(request) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
     }
 
-    // Check if staffKey matches the stored staffId
-    if (user.staffId !== staffKey) {
+    // Check if adminKey matches the stored adminId
+    if (user.adminId !== adminKey) {
       return NextResponse.json({ message: "Invalid Admin key" }, { status: 401 });
     }
 
@@ -31,7 +31,7 @@ export async function POST(request) {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email, staffId: user.staffId },
+      { id: user.id, email: user.email, adminId: user.adminId },
       process.env.JWT_SECRET,
       { expiresIn: "1d" } // You can adjust the expiration as needed
     );
