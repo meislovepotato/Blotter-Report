@@ -1,0 +1,51 @@
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  const pending = await prisma.pendingAdmin.findMany();
+  return NextResponse.json(pending, { status: 200 });
+}
+
+export async function POST(req) {
+  try {
+    const { id } = await req.json();
+
+    const pending = await prisma.pendingAdmin.findUnique({ where: { id } });
+    if (!pending) {
+      return NextResponse.json(
+        { message: "Pending admin not found" },
+        { status: 404 }
+      );
+    }
+
+    // Generate random 6-digit admin ID
+    const adminId = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await prisma.user.create({
+      data: {
+        name: pending.name,
+        email: pending.email,
+        address: pending.address,
+        password: pending.password,
+        adminId,
+      },
+    });
+
+    await prisma.pendingAdmin.delete({ where: { id } });
+
+    return NextResponse.json({ adminId }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Error approving admin", error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req) {
+  // Reject: delete from pending
+  const { id } = await req.json();
+  await prisma.pendingAdmin.delete({ where: { id } });
+  return new Response("Deleted", { status: 200 });
+}

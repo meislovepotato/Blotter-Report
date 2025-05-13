@@ -24,6 +24,8 @@ import {
   CardContent,
   Box,
 } from "@mui/material";
+import { PendingAdmins } from "./components";
+
 
 const AdminDashboard = () => {
   const [blotters, setBlotters] = useState([]);
@@ -90,6 +92,14 @@ const AdminDashboard = () => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
+      <Card sx={{ mt: 4 }}>
+        <CardContent>
+          <Typography variant="h5" gutterBottom>
+            Pending Admin Signups
+          </Typography>
+          <PendingAdmins />
+        </CardContent>
+      </Card>
       <Card>
         <CardContent>
           <Typography variant="h4" gutterBottom>

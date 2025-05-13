@@ -30,3 +30,12 @@ model Blotter {
   status      String @default("Pending")
   createdAt   DateTime @default(now())
 }
+
+model PendingAdmin {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  address   String
+  password  String
+  createdAt DateTime @default(now())
+}
