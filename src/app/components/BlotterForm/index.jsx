@@ -91,7 +91,9 @@ const BlotterForm = () => {
 
     if (response.ok) {
       alert("Blotter submitted successfully!");
+      setLoading(false);
     } else {
+      setLoading(false);
       const errorData = await response.json();
       alert(`Error: ${errorData.error}`);
     }

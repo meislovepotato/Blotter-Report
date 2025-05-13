@@ -91,8 +91,8 @@ const AdminDashboard = () => {
   const categories = Array.from(new Set(blotters.map((b) => b.category)));
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Card sx={{ mt: 4 }}>
+    <Container maxWidth="md" sx={{ marginTop: 4 }}>
+      <Card sx={{ m: 4 }}>
         <CardContent>
           <Typography variant="h5" gutterBottom>
             Pending Admin Signups

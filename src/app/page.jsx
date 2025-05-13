@@ -23,6 +23,7 @@ const Page = () => {
   const handleSignInSuccess = () => {
     setIsAuthenticated(true);
     setModalOpen(false); // Close the modal
+    router.push("/AdminDashboard"); // Redirect to the admin dashboard
   };
 
   return (
@@ -80,7 +81,6 @@ const Page = () => {
         onSignInSuccess={handleSignInSuccess}
       />
 
-      {isAuthenticated ? <AdminDashboard /> : null}
     </Box>
   );
 };
