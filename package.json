@@ -22,6 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "next": "15.2.2",
     "next-auth": "^4.24.11",
+    "nodemailer": "^7.0.3",
     "prisma": "^6.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

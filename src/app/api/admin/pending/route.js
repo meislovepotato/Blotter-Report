@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 import { NextResponse } from "next/server";
+import nodemailer from "nodemailer";
 
 export async function GET() {
   const pending = await prisma.pendingAdmin.findMany();
@@ -33,6 +34,32 @@ export async function POST(req) {
     });
 
     await prisma.pendingAdmin.delete({ where: { id } });
+
+    // --- Send the adminId to the first admin's Gmail ---
+    // Find the first admin (oldest user)
+    const firstAdmin = await prisma.user.findUnique({
+      where: { id: 1 },
+    });
+
+    if (firstAdmin && firstAdmin.email) {
+      // Configure Nodemailer
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS, // Replace with your Gmail App Password
+        },
+      });
+
+      // Send the email
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: firstAdmin.email,
+        subject: "New Admin Key Created",
+        text: `A new admin key was created: ${adminId}`,
+      });
+    }
+    // --
 
     return NextResponse.json({ adminId }, { status: 200 });
   } catch (error) {
