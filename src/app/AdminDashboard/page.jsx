@@ -23,14 +23,15 @@ import {
   Card,
   CardContent,
   Box,
+  TextField,
 } from "@mui/material";
 import { PendingAdmins } from "./components";
-
 
 const AdminDashboard = () => {
   const [blotters, setBlotters] = useState([]);
   const [statusFilter, setStatusFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [searchFilter, setSearchFilter] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedBlotter, setSelectedBlotter] = useState(null);
 
@@ -85,7 +86,9 @@ const AdminDashboard = () => {
   const filteredBlotters = blotters.filter(
     (blotter) =>
       (statusFilter === "All" || blotter.status === statusFilter) &&
-      (categoryFilter === "All" || blotter.category === categoryFilter)
+      (categoryFilter === "All" || blotter.category === categoryFilter) &&
+      (searchFilter === "" ||
+        blotter.complainant.toLowerCase().includes(searchFilter.toLowerCase()))
   );
 
   const categories = Array.from(new Set(blotters.map((b) => b.category)));
@@ -105,34 +108,44 @@ const AdminDashboard = () => {
           <Typography variant="h4" gutterBottom>
             Blotter Reports
           </Typography>
-          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={statusFilter}
-                onChange={handleFilterChange(setStatusFilter)}
-              >
-                <MenuItem value="All">All</MenuItem>
-                <MenuItem value="Pending">Pending</MenuItem>
-                <MenuItem value="In Progress">In Progress</MenuItem>
-                <MenuItem value="Resolved">Resolved</MenuItem>
-              </Select>
-            </FormControl>
+          <Box sx={{ display: "flex", gap: 2, mb: 2, flexDirection: "column" }}>
+            <TextField
+              fullWidth
+              label="Search Complainant"
+              variant="outlined"
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={statusFilter}
+                  onChange={handleFilterChange(setStatusFilter)}
+                >
+                  <MenuItem value="All">All</MenuItem>
+                  <MenuItem value="Pending">Pending</MenuItem>
+                  <MenuItem value="In Progress">In Progress</MenuItem>
+                  <MenuItem value="Resolved">Resolved</MenuItem>
+                </Select>
+              </FormControl>
 
-            <FormControl fullWidth>
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={categoryFilter}
-                onChange={handleFilterChange(setCategoryFilter)}
-              >
-                <MenuItem value="All">All</MenuItem>
-                {categories.map((category) => (
-                  <MenuItem key={category} value={category}>
-                    {category}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={categoryFilter}
+                  onChange={handleFilterChange(setCategoryFilter)}
+                >
+                  <MenuItem value="All">All</MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category} value={category}>
+                      {category}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
           </Box>
 
           <TableContainer component={Paper}>
