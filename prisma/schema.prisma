@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,43 +7,176 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int     @id @default(autoincrement())
-  name      String
-  email     String  @unique
-  address   String
-  password  String
-  adminId   String? @unique
-  createdAt DateTime @default(now())
+enum SeverityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
 
-model Blotter {
-  id          Int    @id @default(autoincrement())
-  complainant String
-  fullAddress String
-  description String
-  phoneNumber String
-  attachmentFront Bytes // Use Bytes to store encrypted data
-  attachmentBack  Bytes 
-  category    String
-  status      String @default("Pending")
-  createdAt   DateTime @default(now())
-  severity    Severity? 
+enum ComplaintStatus {
+  PENDING
+  IN_PROGRESS
+  ESCALATION_REQUESTED
+  ESCALATED
+  RESOLVED
+  REJECTED
+}
+
+enum BlotterStatus {
+  FILED
+  UNDER_MEDIATION
+  RESOLVED
+  REFERRED
+}
+
+enum BlotterCategory {
+  NOISE_COMPLAINT
+  THEFT_OR_BURGLARY
+  TRESPASSING
+  DISTURBANCE_OF_PEACE
+  ASSAULT
+  TRAFFIC_INCIDENT
+  DISORDERLY_CONDUCT
+  PROPERTY_DAMAGE
+  SUSPICIOUS_ACTIVITY
+  DOMESTIC_VIOLENCE
+}
+
+enum ResidencyProofType {
+  ID
+  UTILITY_BILL
+}
+
+enum DashboardRole {
+  ADMIN
+  STAFF
+}
+
+enum HierarchyRole {
+  CAPTAIN
+  KAGAWAD
+  SK_CHAIR
+  SECRETARY
+  CLERK
+}
+
+model Barangay {
+  id          String    @id @default(cuid())
+  name        String    @default("Barangay 123")
+  logoUrl     String?
+  location    String    @default("Tondo, Manila")
+  address     String    @default("Zone 10, District 1, Manila City")
+  hotline     String    @default("(02) 8765 4321")
+  email       String    @default("barangay123@tondo.gov.ph")
+  officeHours String    @default("Monday–Friday, 8:00 AM to 5:00 PM")
+  updatedAt   DateTime  @updatedAt
 }
 
 model PendingAdmin {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  address   String
-  password  String
-  createdAt DateTime @default(now())
+  id          String    @id @default(uuid())
+  name        String
+  email       String    @unique
+  phoneNumber String    @unique
+  password    String
+  createdAt   DateTime  @default(now())
 }
 
-enum Severity {
-  EMERGENCY
-  URGENT
-  MODERATE
-  MINOR
-  INFORMATIONAL
+model Admin {
+  id                  String        @id
+  name                String
+  email               String        @unique
+  phoneNumber         String        @unique
+  password            String
+  dashboardRole       DashboardRole @default(STAFF)
+  hierarchyRole       HierarchyRole @default(CLERK)
+  createdAt           DateTime      @default(now())
+
+  reviewedComplaints  Complaint[]   @relation("ReviewedComplaints")
+  updatedBlotters     Blotter[]     @relation("UpdatedBlotters")
+}
+
+model Complainant {
+  id                String             @id @default(cuid())
+  firstName         String
+  middleName        String?
+  lastName          String
+  phoneNumber       String             @unique
+  fullAddress       String
+  otherContacts     String?
+  residencyProof    ResidencyProofType
+  attachmentIDFront Bytes?
+  attachmentIDBack  Bytes?
+  attachmentUtility Bytes?
+
+  complaints        Complaint[]
+  blotters          Blotter[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model Complaint {
+  id                String                  @id @default(cuid())
+  trackingId        String                  @unique
+  description       String                  @db.Text
+  category          BlotterCategory
+  incidentDateTime  DateTime
+  location          String?
+  subjectName       String?
+  subjectContext    String?                 @db.Text
+  attachments       ComplaintAttachment[]
+
+  status            ComplaintStatus         @default(PENDING)
+  remarks           String?                 @db.Text
+  complainantId     String
+  complainant       Complainant             @relation(fields: [complainantId], references: [id])
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  escalatedAt       DateTime?
+  deniedAt          DateTime?
+  reviewedByAdminId String?
+  reviewedByAdmin   Admin?                  @relation("ReviewedComplaints", fields: [reviewedByAdminId], references: [id])
+
+  blotter           Blotter?                @relation("ComplaintBlotter", fields: [blotterId], references: [id])
+  blotterId         String?                 @unique
+}
+
+model ComplaintAttachment {
+  id           String     @id @default(cuid())
+  file         Bytes
+  complaintId  String
+  complaint    Complaint  @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+}
+
+model Blotter {
+  id                    String               @id @default(cuid())
+  trackingId            String               @unique
+  status                BlotterStatus        @default(FILED)
+  remarks               String?              @db.Text
+
+  description           String               @db.Text
+  category              BlotterCategory
+  incidentDateTime      DateTime
+  location              String?
+  subjectName           String?
+  subjectContext        String?              @db.Text
+  attachments   BlotterAttachment[]
+
+  complainantId         String
+  complainant           Complainant          @relation(fields: [complainantId], references: [id])
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  fromComplaint         Complaint?           @relation("ComplaintBlotter")
+
+  resolvedAt            DateTime?
+  updatedByAdminId      String?
+  updatedByAdmin        Admin?               @relation("UpdatedBlotters", fields: [updatedByAdminId], references: [id])
+}
+
+model BlotterAttachment {
+  id          String  @id @default(cuid())
+  file        Bytes
+  blotterId   String
+  blotter     Blotter @relation(fields: [blotterId], references: [id], onDelete: Cascade)
 }
