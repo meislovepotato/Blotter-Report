@@ -58,8 +58,8 @@ export const proofOfResidencySchema = z
 
 // Step 3: Incident Details
 export const incidentDetailsSchema = z.object({
-  description: z.string().min(1, "Incident description is required"),
   category: z.enum(Object.keys(BLOTTER_CATEGORIES)),
+  description: z.string().optional(),
   incidentDateTime: z.coerce.date(),
   location: z.string().optional(),
   subjectName: z.string().optional(),

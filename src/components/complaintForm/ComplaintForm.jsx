@@ -121,6 +121,7 @@ const ComplaintForm = () => {
     } else {
       setActiveStep((prev) => prev + 1);
     }
+    console.log("Submitting data:", transformData.severity);
   };
 
   return (

@@ -4,7 +4,6 @@ export function validateRequiredFields(data) {
     "complainantLastName",
     "phoneNumber",
     "fullAddress",
-    "description",
     "category",
     "incidentDateTime",
     "proofType",

@@ -16,6 +16,7 @@ export const INITIAL_FORM_DATA = {
   subjectContext: "",
   description: "",
   category: "",
+  severity: "",
   incidentDateTime: new Date().toISOString(),
   location: "",
   complaintAttachment: [],
