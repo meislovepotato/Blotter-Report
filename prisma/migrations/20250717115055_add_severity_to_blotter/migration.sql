@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `blotter` ADD COLUMN `severity` ENUM('EMERGENCY', 'URGENT', 'MODERATE', 'MINOR', 'INFORMATIONAL') NULL;

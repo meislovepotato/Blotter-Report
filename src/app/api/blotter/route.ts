@@ -2,6 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
 
+
+// Category to severity mapping
+const categorySeverityMap: Record<string, "EMERGENCY" | "URGENT" | "MODERATE" | "MINOR" | "INFORMATIONAL"> = {
+  ACCIDENT: "URGENT",
+  ANIMAL_COMPLAINT: "MINOR",
+  ASSAULT: "EMERGENCY",
+  DISORDERLY_CONDUCT: "MINOR",
+  DISTURBANCE_OF_PEACE: "MINOR",
+  DOMESTIC_VIOLENCE: "EMERGENCY",
+  DRUG_RELATED: "MODERATE",
+  FIRE: "EMERGENCY",
+  FRAUD: "MINOR",
+  HARASSMENT: "MODERATE",
+  ILLEGAL_STRUCTURE: "MINOR",
+  LOST_AND_FOUND: "INFORMATIONAL",
+  MISSING_PERSON: "URGENT",
+  NOISE_COMPLAINT: "MINOR",
+  VANDALISM: "MODERATE",
+  PUBLIC_DISTURBANCE: "MINOR",
+  SUSPICIOUS_ACTIVITY: "MODERATE",
+  THEFT: "MODERATE",
+  TRAFFIC_INCIDENT: "URGENT",
+  TRESPASSING: "MINOR",
+  VIOLATION_OF_ORDINANCE: "MINOR",
+  WEAPONS_OFFENSE: "EMERGENCY",
+  OTHER: "INFORMATIONAL",
+};
+
 const prisma = new PrismaClient();
 console.log(Buffer.from(process.env.ENCRYPTION_KEY, "hex").length); // Should be 32
 // Encryption configuration
@@ -64,8 +92,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const encryptedFront = encrypt(bufferFront);
     const encryptedBack = encrypt(bufferBack);
-    console.log("encryptedFront", encryptedFront);
-    console.log("encryptedBack", encryptedBack); 
+    // console.log("encryptedFront", encryptedFront);
+    // console.log("encryptedBack", encryptedBack); 
+    
+    // Map category to severity
+    const severity = categorySeverityMap[category] || "INFORMATIONAL";
 
     const newBlotterEntry = await prisma.blotter.create({
       data: {
@@ -76,6 +107,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         phoneNumber: phoneNumber,
         attachmentFront: encryptedFront,
         attachmentBack: encryptedBack,
+        severity: severity, 
       },
     });
 
