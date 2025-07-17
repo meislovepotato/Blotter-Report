@@ -1,95 +1,63 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcrypt";
-import { PrismaClient } from "@prisma/client";
+import { hashPassword, prisma } from "@/lib";
 
-const prisma = new PrismaClient();
-
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const { name, email, address, password } = await request.json();
+    const body = await req.json();
+    const { name, email, phoneNumber, password, confirmPassword } = body;
 
-    // Validate required fields
-    if (!name || !email || !address || !password ) {
+    if (!name || !email || !phoneNumber || !password || !confirmPassword) {
       return NextResponse.json(
-        { message: "All fields are required." },
+        { error: "All fields are required." },
         { status: 400 }
       );
     }
 
-    // Password must contain at least one number and one special character
-    const passwordRegex = /^(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?/~`])/;
-    if (!passwordRegex.test(password)) {
+    if (password !== confirmPassword) {
+      return NextResponse.json(
+        { error: "Passwords do not match." },
+        { status: 400 }
+      );
+    }
+
+    // Check if email/phone already exists in Admin or PendingAdmin
+    const existingAdmin = await prisma.admin.findFirst({
+      where: { OR: [{ email }, { phoneNumber }] },
+    });
+
+    const existingPending = await prisma.pendingAdmin.findFirst({
+      where: { OR: [{ email }, { phoneNumber }] },
+    });
+
+    if (existingAdmin || existingPending) {
       return NextResponse.json(
         {
-          message:
-            "Password must contain at least one special symbol and one number.",
+          error:
+            "Email or phone number already registered or pending approval.",
         },
         { status: 400 }
       );
     }
 
-    // Check if the email already exists in Admin table
-    const existingAdmin = await prisma.user.findUnique({
-      where: { email },
-    });
-    if (existingAdmin) {
-      return NextResponse.json(
-        { message: "Email is already in use by an admin." },
-        { status: 400 }
-      );
-    }
+    const hashedPassword = await hashPassword(password);
 
-    // Check if the email already exists in PendingAdmin table
-    const existingPending = await prisma.pendingAdmin.findUnique({
-      where: { email },
-    });
-    if (existingPending) {
-      return NextResponse.json(
-        { message: "Email is already in use and awaiting approval." },
-        { status: 400 }
-      );
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Check if there are any admins yet
-    const adminCount = await prisma.user.count();
-    if (adminCount === 0) {
-      // First signup: auto-approve as admin
-      const newAdminId = Math.floor(100000 + Math.random() * 900000).toString();
-      await prisma.user.create({
-        data: {
-          name,
-          email,
-          address,
-          password: hashedPassword,
-          adminId: newAdminId,
-        },
-      });
-      return NextResponse.json(
-        { message: "First admin created and approved!", adminId: newAdminId },
-        { status: 201 }
-      );
-    }
-
-    // Otherwise, save as pending
-    const pending = await prisma.pendingAdmin.create({
+    await prisma.pendingAdmin.create({
       data: {
         name,
         email,
-        address,
+        phoneNumber,
         password: hashedPassword,
       },
     });
 
     return NextResponse.json(
-      { message: "Signup request sent for approval.", pendingId: pending.id },
+      { message: "Signup successful. Awaiting admin approval." },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (err) {
+    console.error("Pending signup error:", err);
     return NextResponse.json(
-      { message: "Something went wrong", error: error.message },
+      { error: "Internal server error." },
       { status: 500 }
     );
   }

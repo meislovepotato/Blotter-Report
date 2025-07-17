@@ -1,38 +1,41 @@
 {
-  "name": "barangay-blotter",
+  "name": "blotter-thesis-app",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "backend": "node src/app/index.js"
+    "lint": "next lint"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@mui/icons-material": "^6.4.8",
-    "@mui/material": "^6.4.2",
-    "@prisma/client": "^6.3.0",
-    "bcrypt": "^5.1.1",
-    "bcryptjs": "^2.4.3",
-    "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2",
-    "next": "15.2.2",
-    "next-auth": "^4.24.11",
-    "nodemailer": "^7.0.3",
-    "prisma": "^6.3.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.2.0",
+    "@mui/material": "^7.2.0",
+    "@mui/x-date-pickers": "^8.7.0",
+    "@prisma/client": "^6.11.1",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
+    "jose": "^6.0.11",
+    "js-cookie": "^3.0.5",
+    "next": "15.3.5",
+    "nodemailer": "^7.0.5",
+    "prisma": "^6.11.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "resend": "^4.6.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@types/node": "22.13.11",
-    "@types/react": "19.0.12",
+    "@tailwindcss/postcss": "^4",
+    "autoprefixer": "^10.4.21",
     "eslint": "^9",
-    "eslint-config-next": "15.2.2",
-    "typescript": "5.8.2"
+    "eslint-config-next": "15.3.5",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11"
   }
 }
