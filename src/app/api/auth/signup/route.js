@@ -58,7 +58,7 @@ export async function POST(request) {
     if (adminCount === 0) {
       // First signup: auto-approve as admin
       const newAdminId = Math.floor(100000 + Math.random() * 900000).toString();
-      const admin = await prisma.user.create({
+      await prisma.user.create({
         data: {
           name,
           email,

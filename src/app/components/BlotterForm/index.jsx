@@ -148,8 +148,8 @@ const BlotterForm = () => {
                 onChange={handleChange}
                 required
               >
-                {CATEGORIES.map((category) => (
-                  <MenuItem key={category} value={category}>
+                {Object.keys(CATEGORIES).map((category) => (
+                  <MenuItem key={category} value={CATEGORIES[category]}>
                     {category}
                   </MenuItem>
                 ))}
