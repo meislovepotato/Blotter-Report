@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ComplaintDetailModal, DataTable } from "@/components";
+import { ComplaintDetailModal, DataTable, FilterBar } from "@/components";
 import {
   AVATAR_COLORS,
   BLOTTER_CATEGORIES,
@@ -44,6 +44,12 @@ const ComplaintsOverview = ({
     open: false,
     message: "",
     severity: "success",
+  });
+  const [filters, setFilters] = useState({
+    q: "",
+    category: "",
+    dateFrom: "",
+    dateTo: "",
   });
 
   const router = useRouter();
@@ -125,6 +131,26 @@ const ComplaintsOverview = ({
       channel.close();
     };
   }, []);
+
+  const from = filters.dateFrom ? new Date(filters.dateFrom) : null;
+  const to = filters.dateTo ? new Date(filters.dateTo) : null;
+
+  const filtered = complaints.filter((c) => {
+    const q = filters.q.toLowerCase();
+    const date = new Date(c.createdAt);
+
+    const matchesSearch =
+      !filters.q ||
+      c.complainant?.lastName.toLowerCase().includes(q) ||
+      c.complainant?.firstName.toLowerCase().includes(q) ||
+      c.trackingId.toLowerCase().includes(q);
+
+    const matchesCat = !filters.category || c.category === filters.category;
+    const matchesFrom = !from || date >= from;
+    const matchesTo = !to || date <= to;
+
+    return matchesSearch && matchesCat && matchesFrom && matchesTo;
+  });
 
   const columns = [
     {
@@ -252,8 +278,16 @@ const ComplaintsOverview = ({
 
   return (
     <>
+      {!isCompact && (
+        <FilterBar
+          filters={filters}
+          setFilters={setFilters}
+          onApply={() => {}}
+          onClear={() => setFilters({ q: "", category: "", severity: "" })}
+        />
+      )}
       <DataTable
-        data={complaints}
+        data={filtered}
         columns={columns}
         isCompact={isCompact}
         isViewable={isViewable}

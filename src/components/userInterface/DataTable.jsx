@@ -144,7 +144,7 @@ const DataTable = ({
             <thead>
               <tr
                 ref={headerRef}
-                className="bg-secondary/50 text-xs rounded-t-md"
+                className="bg-secondary/50 text-sm rounded-t-md"
               >
                 {columns.map((col, idx) => (
                   <th
