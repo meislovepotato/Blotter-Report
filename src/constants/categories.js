@@ -9,6 +9,20 @@ export const BLOTTER_CATEGORIES = {
   PROPERTY_DAMAGE: "Property Damage/Vandalism",
   SUSPICIOUS_ACTIVITY: "Suspicious Activity",
   DOMESTIC_VIOLENCE: "Domestic Violence",
+  ACCIDENT: "Accident",
+  ANIMAL_COMPLAINT: "Animal Complaint",
+  DRUG_RELATED: "Drug Related",
+  FIRE: "Fire",
+  FRAUD: "Fraud",
+  HARASSMENT: "Harassment",
+  ILLEGAL_STRUCTURE: "Illegal Structure",
+  LOST_AND_FOUND: "Lost and Found",
+  MISSING_PERSON: "Missing Person",
+  VANDALISM: "Property Damage / Vandalism",
+  PUBLIC_DISTURBANCE: "Public Disturbance",
+  VIOLATION_OF_ORDINANCE: "Violation of Ordinance",
+  WEAPONS_OFFENSE: "Weapons Offense",
+  OTHER: "Other",
 };
 
 export const CATEGORY_COLORS = {
@@ -22,6 +36,20 @@ export const CATEGORY_COLORS = {
   PROPERTY_DAMAGE: "bg-gray-100 text-gray-800",
   SUSPICIOUS_ACTIVITY: "bg-pink-100 text-pink-800",
   DOMESTIC_VIOLENCE: "bg-indigo-100 text-indigo-800",
+  ACCIDENT: "bg-sky-100 text-sky-800",
+  ANIMAL_COMPLAINT: "bg-lime-100 text-lime-800",
+  DRUG_RELATED: "bg-fuchsia-100 text-fuchsia-800",
+  FIRE: "bg-orange-200 text-orange-900",
+  FRAUD: "bg-teal-100 text-teal-800",
+  HARASSMENT: "bg-rose-200 text-rose-900",
+  ILLEGAL_STRUCTURE: "bg-stone-100 text-stone-800",
+  LOST_AND_FOUND: "bg-cyan-100 text-cyan-800",
+  MISSING_PERSON: "bg-indigo-200 text-indigo-900",
+  VANDALISM: "bg-neutral-100 text-neutral-800",
+  PUBLIC_DISTURBANCE: "bg-emerald-100 text-emerald-800",
+  VIOLATION_OF_ORDINANCE: "bg-yellow-200 text-yellow-900",
+  WEAPONS_OFFENSE: "bg-red-200 text-red-900",
+  OTHER: "bg-gray-200 text-gray-800",
 };
 
 export const BLOTTER_CATEGORY_OPTIONS = Object.entries(BLOTTER_CATEGORIES).map(

@@ -7,7 +7,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import { BLOTTER_CATEGORY_OPTIONS } from "@/constants";
+import { BLOTTER_CATEGORY_OPTIONS, categorySeverityMap } from "@/constants";
 import { LocalizationProvider, DateTimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
@@ -46,7 +46,19 @@ const IncidentDetails = ({ formData, setFormData }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+
+      // If category changes, update severity as well
+      if (name === "category") {
+        const severity = categorySeverityMap[value] || "INFORMATIONAL";
+        updated.severity = severity;
+        console.log("Category:", value);
+        console.log("Severity:", severity);
+      }
+
+      return updated;
+    });
   };
   return (
     <div className="space-y-4">
@@ -100,7 +112,6 @@ const IncidentDetails = ({ formData, setFormData }) => {
           maxRows={3}
           onChange={handleChange}
           fullWidth
-          required
           slotProps={{ htmlInput: { maxLength: DESCRIPTION_MAX_LENGTH } }}
           helperText={
             <span className="flex justify-end w-full text-text/50">

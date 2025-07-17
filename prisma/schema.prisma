@@ -8,10 +8,11 @@ datasource db {
 }
 
 enum SeverityLevel {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
+  EMERGENCY
+  URGENT
+  MODERATE
+  MINOR
+  INFORMATIONAL
 }
 
 enum ComplaintStatus {
@@ -41,6 +42,20 @@ enum BlotterCategory {
   PROPERTY_DAMAGE
   SUSPICIOUS_ACTIVITY
   DOMESTIC_VIOLENCE
+  ACCIDENT
+  ANIMAL_COMPLAINT
+  DRUG_RELATED
+  FIRE
+  FRAUD
+  HARASSMENT
+  ILLEGAL_STRUCTURE
+  LOST_AND_FOUND
+  MISSING_PERSON
+  VANDALISM
+  PUBLIC_DISTURBANCE
+  VIOLATION_OF_ORDINANCE
+  WEAPONS_OFFENSE
+  OTHER
 }
 
 enum ResidencyProofType {
@@ -127,6 +142,7 @@ model Complaint {
   attachments       ComplaintAttachment[]
 
   status            ComplaintStatus         @default(PENDING)
+  severity          SeverityLevel?
   remarks           String?                 @db.Text
   complainantId     String
   complainant       Complainant             @relation(fields: [complainantId], references: [id])

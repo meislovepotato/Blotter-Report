@@ -126,7 +126,18 @@ const BlotterOverview = ({ isCompact = false }) => {
     {
       key: "incidentDateTime",
       header: "Incident Date",
-      render: (val) => new Date(val).toLocaleString(),
+      render: (val) => {
+        const date = new Date(val);
+        return `${date.toLocaleDateString("en-US", {
+          month: "long",
+          day: "2-digit",
+          year: "numeric",
+        })} ${date.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        })}`;
+      },
     },
     ...(isCompact
       ? []

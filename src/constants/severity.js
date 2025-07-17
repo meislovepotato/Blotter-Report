@@ -1,0 +1,35 @@
+export const SeverityLevel = {
+  EMERGENCY: "EMERGENCY",
+  URGENT: "URGENT",
+  MODERATE: "MODERATE",
+  MINOR: "MINOR",
+  INFORMATIONAL: "INFORMATIONAL",
+};
+
+export const categorySeverityMap = {
+  ACCIDENT: SeverityLevel.URGENT,
+  ANIMAL_COMPLAINT: SeverityLevel.MINOR,
+  ASSAULT: SeverityLevel.EMERGENCY,
+  DISORDERLY_CONDUCT: SeverityLevel.MINOR,
+  DISTURBANCE_OF_PEACE: SeverityLevel.MINOR,
+  DOMESTIC_VIOLENCE: SeverityLevel.EMERGENCY,
+  DRUG_RELATED: SeverityLevel.MODERATE,
+  FIRE: SeverityLevel.EMERGENCY,
+  FRAUD: SeverityLevel.MINOR,
+  HARASSMENT: SeverityLevel.MODERATE,
+  ILLEGAL_STRUCTURE: SeverityLevel.MINOR,
+  LOST_AND_FOUND: SeverityLevel.INFORMATIONAL,
+  MISSING_PERSON: SeverityLevel.URGENT,
+  NOISE_COMPLAINT: SeverityLevel.MINOR,
+  VANDALISM: SeverityLevel.MODERATE,
+  PUBLIC_DISTURBANCE: SeverityLevel.MINOR,
+  SUSPICIOUS_ACTIVITY: SeverityLevel.MODERATE,
+  THEFT: SeverityLevel.MODERATE,
+  THEFT_OR_BURGLARY: SeverityLevel.MODERATE, // Legacy key
+  TRAFFIC_INCIDENT: SeverityLevel.URGENT,
+  TRESPASSING: SeverityLevel.MINOR,
+  VIOLATION_OF_ORDINANCE: SeverityLevel.MINOR,
+  WEAPONS_OFFENSE: SeverityLevel.EMERGENCY,
+  OTHER: SeverityLevel.INFORMATIONAL,
+  PROPERTY_DAMAGE: SeverityLevel.MODERATE, // Legacy key
+};
