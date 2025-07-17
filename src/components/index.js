@@ -2,6 +2,8 @@ export { default as ComplaintForm } from "./complaintForm/ComplaintForm";
 
 export { default as AuthModal } from "./authModal/AuthModal";
 
+export { default as FloatingTrackModal } from "./floatingTrackModal/index.jsx";
+
 export * from "./userInterface";
 
 export * from "./dashboard";
