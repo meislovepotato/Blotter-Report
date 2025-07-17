@@ -77,9 +77,10 @@ export async function POST(req) {
     const complaint = await prisma.complaint.create({
       data: {
         trackingId,
-        complainantId,
-        description: data.description,
+        complainantId, // ✅ just this
+        description: data.description || "", // <- change this if nullable
         category: data.category,
+        severity: data.severity || "INFORMATIONAL",
         incidentDateTime: new Date(data.incidentDateTime),
         location: data.location || null,
         subjectName: data.subjectName || null,
