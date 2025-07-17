@@ -1,5 +1,31 @@
 "use client";
+import { SeverityLevel } from "@/constants";
 import { useState, useEffect, useRef } from "react";
+
+const severityColorMap = {
+  [SeverityLevel.EMERGENCY]: "bg-red-100/40",
+  [SeverityLevel.URGENT]: "bg-orange-100/40",
+  [SeverityLevel.MODERATE]: "bg-yellow-100/40",
+  [SeverityLevel.MINOR]: "bg-green-100/40",
+  [SeverityLevel.INFORMATIONAL]: "bg-gray-100/40",
+};
+
+const severityHoverMap = {
+  [SeverityLevel.EMERGENCY]: "hover:bg-red-200/60",
+  [SeverityLevel.URGENT]: "hover:bg-orange-200/60",
+  [SeverityLevel.MODERATE]: "hover:bg-yellow-200/60",
+  [SeverityLevel.MINOR]: "hover:bg-green-200/60",
+  [SeverityLevel.INFORMATIONAL]: "hover:bg-gray-200/60",
+};
+
+const SEVERITY_ORDER = {
+  [SeverityLevel.EMERGENCY]: 5,
+  [SeverityLevel.URGENT]: 4,
+  [SeverityLevel.MODERATE]: 3,
+  [SeverityLevel.MINOR]: 2,
+  [SeverityLevel.INFORMATIONAL]: 1,
+  null: 0,
+};
 
 const DataTable = ({
   data = [],
@@ -18,10 +44,23 @@ const DataTable = ({
   const [dynamicMaxRows, setDynamicMaxRows] = useState(maxRows || 10);
 
   const safeData = Array.isArray(data) ? data : [];
+
+  // Sort by severity (descending), then fallback to createdAt if needed
+  const sortedData = [...safeData].sort((a, b) => {
+    const aSeverity = SEVERITY_ORDER[a.severity] ?? 0;
+    const bSeverity = SEVERITY_ORDER[b.severity] ?? 0;
+
+    if (aSeverity !== bSeverity) {
+      return bSeverity - aSeverity;
+    }
+
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
   const effectiveMaxRows = maxRows || dynamicMaxRows;
   const displayData = effectiveMaxRows
-    ? safeData.slice(0, effectiveMaxRows)
-    : safeData;
+    ? sortedData.slice(0, effectiveMaxRows)
+    : sortedData;
 
   useEffect(() => {
     const calculateMaxRows = () => {
@@ -59,14 +98,7 @@ const DataTable = ({
   }, [data, columns, isCompact, maxRows]);
 
   const getSeverityClass = (severity) => {
-    switch (severity) {
-      case "CRITICAL":
-        return "bg-red-100";
-      case "HIGH":
-        return "bg-yellow-100";
-      default:
-        return "";
-    }
+    return severityColorMap[severity] || "";
   };
 
   return (
@@ -105,7 +137,7 @@ const DataTable = ({
       <div className="overflow-auto h-full">
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-6 w-6"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-transparent"></div>
           </div>
         ) : (
           <table className="w-full text-sm">
@@ -131,13 +163,14 @@ const DataTable = ({
                 const severityClass = getSeverityClass(row.severity);
                 const fallbackBg =
                   !severityClass && idx % 2 === 1 ? "bg-text/5" : "";
+                const hoverClass =
+                  severityHoverMap[row.severity] || "hover:bg-secondary/10";
+
                 return (
                   <tr
                     key={idx}
                     ref={idx === 0 ? rowRef : null}
-                    className={`text-xs hover:bg-secondary/10 ${
-                      onRowClick ? "cursor-pointer" : ""
-                    } ${severityClass || fallbackBg}`}
+                    className={`text-xs ${onRowClick ? "cursor-pointer" : ""} ${severityClass || fallbackBg} ${hoverClass}`}
                     onClick={() => onRowClick?.(row)}
                   >
                     {columns.map((col, colIdx) => (

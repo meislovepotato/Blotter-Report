@@ -29,13 +29,7 @@ const getDeterministicAvatarColor = (id, colorsArray) => {
   return colorsArray[index];
 };
 
-// === severity classification logic ===
-const classifySeverity = (complaint) => {
-  // Adjust this logic as needed
-  if (complaint.status === "ESCALATED") return "CRITICAL";
-  if (complaint.status === "ESCALATION_REQUESTED") return "HIGH";
-  return null;
-};
+const classifySeverity = (complaint) => complaint.severity || null;
 
 const ComplaintsOverview = ({
   isCompact = false,
