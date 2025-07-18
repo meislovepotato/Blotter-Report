@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import { VisibilityRounded } from "@mui/icons-material";
 import { Alert, Snackbar } from "@mui/material";
 
-// === deterministic avatar color helper ===
 const getDeterministicAvatarColor = (id, colorsArray) => {
   if (!id || (typeof id !== "string" && typeof id !== "number")) {
     return DEFAULT_FALLBACK_COLOR;

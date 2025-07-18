@@ -1,8 +1,8 @@
 "use client";
 
-import { SearchRounded } from "@mui/icons-material";
-import { CircularProgress, TextField } from "@mui/material";
 import { useState } from "react";
+import { CircularProgress, TextField } from "@mui/material";
+import { SearchRounded } from "@mui/icons-material";
 import { PrimaryButton } from "../userInterface";
 import {
   AVATAR_COLORS,
@@ -12,12 +12,24 @@ import {
 } from "@/constants";
 import { format } from "date-fns";
 
-const TrackModal = () => {
+const getDeterministicAvatarColor = (id, colorsArray) => {
+  if (!id || (typeof id !== "string" && typeof id !== "number")) {
+    return "bg-gray-400";
+  }
+  let hash = 0;
+  const str = id.toString();
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colorsArray.length;
+  return colorsArray[index];
+};
+
+const TrackModal = ({ className }) => {
   const [trackingId, setTrackingId] = useState("");
   const [complaint, setComplaint] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [previewImage, setPreviewImage] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,32 +45,16 @@ const TrackModal = () => {
       });
 
       const data = await res.json();
-      setLoading(false);
-
-      if (!res.ok) {
-        setError(data.error || "Not found");
-      } else {
-        setComplaint(data.complaint);
+      if (!res.ok || !data.complaint) {
+        throw new Error(data.error || "Complaint not found");
       }
+
+      setComplaint(data.complaint);
     } catch (err) {
+      setError(err.message || "Something went wrong.");
+    } finally {
       setLoading(false);
-      setError("Something went wrong.");
     }
-  };
-
-  const getDeterministicAvatarColor = (id, colorsArray) => {
-    if (!id || (typeof id !== "string" && typeof id !== "number")) {
-      return "bg-gray-400";
-    }
-
-    let hash = 0;
-    const str = id.toString();
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    const index = Math.abs(hash) % colorsArray.length;
-    return colorsArray[index];
   };
 
   const complainant = complaint?.complainant || {};
@@ -69,137 +65,138 @@ const TrackModal = () => {
     phoneNumber,
     fullAddress,
     remarks,
-    attachmentIDFront,
-    attachmentIDBack,
-    attachmentUtility,
   } = complainant;
 
   const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase();
-  const avatarColorClass = getDeterministicAvatarColor(
+  const avatarColor = getDeterministicAvatarColor(
     complainant.id,
     AVATAR_COLORS
   );
-
-  const imageUrls = {
-    idFront: attachmentIDFront || null,
-    idBack: attachmentIDBack || null,
-    utility: attachmentUtility || null,
-    evidence: complaint?.attachments?.map((a) => a.file).filter(Boolean) || [],
-  };
-
-  const { status, category, description, location, createdAt, updatedAt } =
-    complaint || {};
-
-  const effectiveLocation = location || fullAddress;
+  const effectiveLocation = complaint?.location || fullAddress || "N/A";
+  const complaintCategory =
+    BLOTTER_CATEGORIES[complaint?.category] || complaint?.category || "N/A";
+  const complaintStatus =
+    complaint?.status?.toLowerCase().replace(/_/g, " ") || "N/A";
 
   return (
-    <div className="flex flex-col gap-4 bg-secondary/20 backdrop-blur-lg rounded-2xl p-6 w-full h-132 md:h-96">
+    <div
+      className={`flex-col gap-4 bg-secondary/20 backdrop-blur-lg rounded-2xl p-6 w-full sm:flex-1 sm:h-full h-132 lg:flex-none lg:h-90 2xl:h-96 ${className}`}
+    >
       <h2 className="text-xl font-bold">
         <span className="text-primary">Track</span> Your Report
       </h2>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-row gap-2">
-          <TextField
-            label="Tracking ID"
-            name="trackingId"
-            value={trackingId}
-            onChange={(e) => setTrackingId(e.target.value)}
-            required
-            fullWidth
-            className="bg-background/90 rounded-xl"
-          />
-          <PrimaryButton
-            isForm
-            disabled={loading}
-            className="!px-0 aspect-square"
-          >
-            {loading ? (
-              <CircularProgress size={24} className="!text-background" />
-            ) : (
-              <SearchRounded />
-            )}
-          </PrimaryButton>
-        </div>
+      {/* FORM */}
+      <form onSubmit={handleSubmit} className="flex flex-row gap-2">
+        <TextField
+          label="Tracking ID"
+          name="trackingId"
+          value={trackingId}
+          onChange={(e) => setTrackingId(e.target.value)}
+          required
+          fullWidth
+          className="bg-background/90 rounded-xl"
+        />
+        <PrimaryButton
+          isForm
+          disabled={loading}
+          className="!px-0 aspect-square"
+        >
+          {loading ? (
+            <CircularProgress size={24} className="!text-background" />
+          ) : (
+            <SearchRounded />
+          )}
+        </PrimaryButton>
       </form>
 
-      {error && <div className="text-red-500 mt-4">{error}</div>}
+      {/* ERROR MESSAGE */}
+      {error && <div className="text-red-500">{error}</div>}
 
+      {/* COMPLAINT DETAILS */}
       {complaint && (
         <>
           <section className="px-2">
             <div className="flex flex-col md:grid md:grid-cols-2 gap-4">
               <div className="flex items-center space-x-2">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-white ${avatarColorClass}`}
+                  className={`w-8 lg:w-10 aspect-square rounded-full flex items-center justify-center text-sm font-semibold text-white ${avatarColor}`}
+                  title={`${firstName} ${lastName}`}
                 >
                   {initials}
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-text">
-                    {`${lastName}, ${firstName} ${middleName}`.trim()}
+                  <div className="text-xs font-medium lg:text-base text-text">
+                    {`${lastName}, ${firstName} ${middleName || ""}`.trim()}
                   </div>
                   {phoneNumber && (
-                    <div className="text-xs text-text opacity-50">
+                    <div className="text-[0.625rem] lg:text-xs text-text opacity-50">
                       {phoneNumber}
                     </div>
                   )}
                 </div>
               </div>
-              <p className="text-sm md:text-right">
-                <strong>Tracking ID:</strong> {trackingId || "N/A"}
+              <p className="text-sm md:text-xs sm:text-right">
+                <strong>Tracking ID:</strong> {trackingId}
               </p>
             </div>
           </section>
 
-          <section className="bg-white p-4 rounded-2xl shadow-xl shadow-primary/10 flex flex-col gap-6 flex-1 overflow-y-auto">
-            <h3 className="text-lg font-bold mb-2 flex gap-4 items-center">
+          <section className="bg-white p-4 rounded-2xl shadow-xl shadow-primary/10 flex flex-col flex-1 gap-4 lg:gap-6 overflow-y-auto">
+            <h3 className="text-base lg:text-lg font-bold mb-2 flex gap-4 items-center">
               Complaint Info
-              <span className="font-thin flex flex-1 flex-row justify-between">
+              <span className="font-thin flex flex-1 justify-between">
                 <span
                   className={`inline-block px-2 py-1 text-sm rounded font-medium ${
-                    CATEGORY_COLORS[category] || "bg-gray-100 text-gray-700"
+                    CATEGORY_COLORS[complaint?.category] ||
+                    "bg-gray-100 text-gray-700"
                   }`}
                 >
-                  {BLOTTER_CATEGORIES[category] || category || "N/A"}
+                  {complaintCategory}
                 </span>
                 <span
                   className={`inline-block px-2 py-1 text-sm rounded font-medium ${
-                    STATUS_STYLES[status] || STATUS_STYLES.DEFAULT
+                    STATUS_STYLES[complaint?.status] || STATUS_STYLES.DEFAULT
                   }`}
                 >
-                  {status}
+                  {complaintStatus
+                    .split(" ")
+                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                    .join(" ")}
                 </span>
               </span>
             </h3>
-            <div className="flex flex-col md:grid md:grid-cols-2 gap-4">
-              <div className="col-span-1 flex flex-row gap-2">
+
+            <div className="flex flex-col md:grid md:grid-cols-2 gap-4 *:text-sm">
+              <div className="flex gap-2">
                 <span className="font-semibold">Description:</span>
-                <p className="text-gray-700 flex-1 line-clamp-2">
-                  {description || "N/A"}
+                <p className="text-gray-700 line-clamp-2">
+                  {complaint?.description || "N/A"}
                 </p>
               </div>
 
               <p className="md:text-right">
                 <span className="font-semibold">Location:</span>{" "}
-                {effectiveLocation || "N/A"}
+                {effectiveLocation}
               </p>
-              <span className="col-span-2 flex flex-col md:grid md:grid-cols-2 gap-4 justify-between">
-                <p className="col-span-1">
-                  <span className="font-semibold">Date Filed: </span>
-                  {createdAt ? format(new Date(createdAt), "PPP p") : "N/A"}
-                </p>
-                {updatedAt && (
-                  <p className="col-span-1">
-                    <span className="font-semibold">Date Updated: </span>
-                    {updatedAt ? format(new Date(updatedAt), "PPP p") : "N/A"}
-                  </p>
-                )}
-              </span>
+
+              <p>
+                <span className="font-semibold">Date Filed:</span>{" "}
+                {complaint?.createdAt
+                  ? format(new Date(complaint.createdAt), "PPP")
+                  : "N/A"}
+              </p>
+
+              <p>
+                <span className="font-semibold">Date Updated:</span>{" "}
+                {complaint?.updatedAt
+                  ? format(new Date(complaint.updatedAt), "PPP")
+                  : "N/A"}
+              </p>
+
               {remarks && (
-                <p className="grid-cols-2">
-                  <strong>Remarks: </strong>
-                  {remarks}
+                <p className="col-span-2">
+                  <strong>Remarks:</strong> {remarks}
                 </p>
               )}
             </div>
