@@ -88,7 +88,6 @@ export default function FilterBar({ filters, setFilters, onApply, onClear }) {
       />
 
       <SecondaryButton onClick={onClear}>Clear</SecondaryButton>
-      <PrimaryButton onClick={onApply}>Apply</PrimaryButton>
     </div>
   );
 }

@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { decryptBuffer, bufferToBase64DataUrl } from "@/lib/complaint";
 
 const prisma = new PrismaClient();
 
 export async function POST(req) {
   try {
     const { trackingId } = await req.json();
+
     if (!trackingId) {
-      return NextResponse.json({ error: "Missing trackingId" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Missing trackingId" },
+        { status: 400 }
+      );
     }
 
     const complaint = await prisma.complaint.findUnique({
@@ -15,6 +20,7 @@ export async function POST(req) {
       include: {
         complainant: {
           select: {
+            id: true,
             firstName: true,
             middleName: true,
             lastName: true,
@@ -26,21 +32,118 @@ export async function POST(req) {
             attachmentUtility: true,
           },
         },
-        attachments: true,
+        attachments: {
+          select: {
+            id: true,
+            file: true,
+          },
+        },
       },
     });
 
     if (!complaint) {
-      return NextResponse.json({ error: "Complaint not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "Complaint not found" },
+        { status: 404 }
+      );
     }
 
-    // Decrypt attachments if needed (optional, for preview)
-    // ...add decryption logic if you want to show images...
+    const decryptedAttachments = await Promise.all(
+      complaint.attachments.map(async (attachment) => {
+        try {
+          const buffer = await decryptBuffer(attachment.file);
+          const dataUrl = await bufferToBase64DataUrl(buffer);
+          return {
+            id: attachment.id,
+            file: dataUrl,
+          };
+        } catch (error) {
+          console.warn("Failed to decrypt incident attachment:", error);
+          return {
+            id: attachment.id,
+            file: null,
+          };
+        }
+      })
+    );
 
-    return NextResponse.json({ success: true, complaint });
+    const complainant = complaint.complainant || {};
+    const enrichedComplainant = {
+      ...complainant,
+      attachmentIDFront: null,
+      attachmentIDBack: null,
+      attachmentUtility: null,
+    };
+
+    try {
+      if (complainant.attachmentIDFront) {
+        const buffer = await decryptBuffer(complainant.attachmentIDFront);
+        enrichedComplainant.attachmentIDFront =
+          await bufferToBase64DataUrl(buffer);
+      }
+    } catch (error) {
+      console.warn("Failed to decrypt ID front:", error);
+    }
+
+    try {
+      if (complainant.attachmentIDBack) {
+        const buffer = await decryptBuffer(complainant.attachmentIDBack);
+        enrichedComplainant.attachmentIDBack =
+          await bufferToBase64DataUrl(buffer);
+      }
+    } catch (error) {
+      console.warn("Failed to decrypt ID back:", error);
+    }
+
+    try {
+      if (complainant.attachmentUtility) {
+        const buffer = await decryptBuffer(complainant.attachmentUtility);
+        enrichedComplainant.attachmentUtility =
+          await bufferToBase64DataUrl(buffer);
+      }
+    } catch (error) {
+      console.warn("Failed to decrypt utility proof:", error);
+    }
+
+    return NextResponse.json({
+      success: true,
+      complaint: {
+        ...complaint,
+        attachments: decryptedAttachments,
+        complainant: enrichedComplainant,
+      },
+    });
   } catch (error) {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("Complaint tracking error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
   } finally {
     await prisma.$disconnect();
   }
 }
+
+// <div className="flex-1">
+//   <h3 className="font-semibold mb-2">Complaint Details</h3>
+//   <div>
+//     <strong>Status:</strong> {complaint.status}
+//   </div>
+//   <div>
+//     <strong>Description:</strong> {complaint.description}
+//   </div>
+//   <div>
+//     <strong>Category:</strong> {complaint.category}
+//   </div>
+//   <div>
+//     <strong>Date Filed:</strong>{" "}
+//     {new Date(complaint.createdAt).toLocaleString()}
+//   </div>
+//   <div>
+//     <strong>Complainant:</strong>{" "}
+//     {`${complaint.complainant.lastName}, ${complaint.complainant.firstName} ${complaint.complainant.middleName || ""}`}
+//   </div>
+//   <div>
+//     <strong>Address:</strong> {complaint.complainant.fullAddress}
+//   </div>
+// </div>

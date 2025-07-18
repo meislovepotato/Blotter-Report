@@ -67,19 +67,14 @@ const BlotterOverview = ({ isCompact = false }) => {
       header: "Status",
       render: (value) => (
         <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            value === "FILED"
-              ? "bg-yellow-100 text-yellow-800"
-              : value === "UNDER_MEDIATION"
-                ? "bg-blue-100 text-blue-800"
-                : value === "RESOLVED"
-                  ? "bg-green-100 text-green-800"
-                  : value === "REFERRED"
-                    ? "bg-purple-100 text-purple-800"
-                    : "bg-gray-100 text-gray-800"
-          }`}
+          className={`px-2 py-1 rounded-full text-xs ${STATUS_STYLES[value] || STATUS_STYLES.DEFAULT}`}
         >
-          {value.replace(/_/g, " ")}
+          {value
+            .toLowerCase()
+            .replace(/_/g, " ")
+            .split(" ")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")}
         </span>
       ),
     },

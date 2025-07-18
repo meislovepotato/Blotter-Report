@@ -5,6 +5,7 @@ import {
   AVATAR_COLORS,
   BLOTTER_CATEGORIES,
   DEFAULT_FALLBACK_COLOR,
+  STATUS_STYLES,
 } from "@/constants";
 import { useRouter } from "next/navigation";
 import { VisibilityRounded } from "@mui/icons-material";
@@ -163,21 +164,7 @@ const ComplaintsOverview = ({
       header: "Status",
       render: (value) => (
         <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            value === "PENDING"
-              ? "bg-yellow-100 text-yellow-800"
-              : value === "IN_PROGRESS"
-                ? "bg-blue-100 text-blue-800"
-                : value === "ESCALATION_REQUESTED"
-                  ? "bg-orange-100 text-orange-800"
-                  : value === "ESCALATED"
-                    ? "bg-purple-100 text-purple-800"
-                    : value === "RESOLVED"
-                      ? "bg-green-100 text-green-800"
-                      : value === "REJECTED"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-gray-100 text-gray-800"
-          }`}
+          className={`px-2 py-1 rounded-full text-xs ${STATUS_STYLES[value] || STATUS_STYLES.DEFAULT}`}
         >
           {value
             .toLowerCase()

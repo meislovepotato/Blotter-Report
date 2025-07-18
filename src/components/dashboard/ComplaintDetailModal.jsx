@@ -59,12 +59,6 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  const handleOverlayClick = (e) => {
-    if (modalRef.current && !modalRef.current.contains(e.target)) {
-      onClose();
-    }
-  };
-
   const getDeterministicAvatarColor = (id, colorsArray) => {
     if (!id || (typeof id !== "string" && typeof id !== "number")) {
       return "bg-gray-400";
@@ -86,6 +80,7 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
   const initials = `${complainant.firstName?.[0] || ""}${
     complainant.lastName?.[0] || ""
   }`.toUpperCase();
+
   const avatarColorClass = getDeterministicAvatarColor(
     complainant.id,
     AVATAR_COLORS
@@ -131,7 +126,13 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
             </p>
             <div className="flex flex-col gap-2 ">
               <p>
-                <strong>Proof Type:</strong> {residencyProof || "N/A"}
+                <strong>Proof Type:</strong>{" "}
+                {residencyProof
+                  .toLowerCase()
+                  .replace(/_/g, " ")
+                  .split(" ")
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(" ") || "N/A"}
               </p>
               <div className="flex flex-wrap gap-4">
                 {["idFront", "idBack", "utility"].map(
