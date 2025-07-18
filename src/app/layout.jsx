@@ -3,7 +3,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "@/styles/theme";
 import { getBarangayInfoServer } from "@/lib";
-import { FloatingTrackModal } from "../components";
+import { BarangayInfoModal } from "@/components";
 
 export async function generateMetadata() {
   const barangayInfo = await getBarangayInfoServer();
@@ -25,7 +25,7 @@ export default function RootLayout({ children }) {
         <ThemeProvider theme={theme}>
           <CssBaseline />
           {children}
-          <FloatingTrackModal />
+          <BarangayInfoModal />
         </ThemeProvider>
       </body>
     </html>
