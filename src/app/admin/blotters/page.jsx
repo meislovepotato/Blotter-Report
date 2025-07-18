@@ -1,15 +1,11 @@
-"use client";
+import { FullBlottersView } from "@/components";
 
-import { BlottersOverview } from "@/components";
-import { useUser } from "@/context";
+export const metadata = {
+  title: "Blotters",
+};
 
 const FullBlotter = () => {
-  const user = useUser();
-  return (
-    <div className="h-full p-4 rounded-2xl bg-background shadow-2xl shadow-text/10">
-      <BlottersOverview isCompact={false} dashboardRole={user?.dashboardRole} />
-    </div>
-  );
+  return <FullBlottersView />;
 };
 
 export default FullBlotter;

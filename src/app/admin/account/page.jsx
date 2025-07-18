@@ -1,4 +1,6 @@
-"user client";
+export const metadata = {
+  title: "Account",
+};
 
 const AccountSettings = () => {
   return <div>AccountSettings</div>;
