@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { CloseRounded } from "@mui/icons-material";
 import {
@@ -11,11 +11,18 @@ import {
 import { PrimaryButton, SecondaryButton } from "../userInterface";
 import { Dialog, DialogContent, IconButton } from "@mui/material";
 
-const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
-  const modalRef = useRef(null);
+const ReportDetailModal = ({
+  type = "complaint",
+  data,
+  adminRole,
+  onClose,
+  onAction,
+}) => {
   const [previewImage, setPreviewImage] = useState(null);
+  const isBlotter = type === "blotter";
 
   const {
+    id,
     trackingId,
     complainant,
     category,
@@ -26,16 +33,29 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
     incidentDateTime,
     attachments = [],
     status,
-  } = complaint;
+  } = data;
 
   const {
     residencyProof,
     attachmentIDFront,
     attachmentIDBack,
     attachmentUtility,
+    fullAddress,
+    phoneNumber,
+    firstName,
+    middleName,
+    lastName,
   } = complainant || {};
 
-  const effectiveLocation = location || complainant?.fullAddress;
+  const effectiveLocation = location || fullAddress;
+  const currentStatus = status || (isBlotter ? "FILED" : "PENDING");
+
+  const initials =
+    `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase();
+  const avatarColorClass = getDeterministicAvatarColor(
+    complainant?.id,
+    AVATAR_COLORS
+  );
 
   const [imageUrls, setImageUrls] = useState({
     idFront: null,
@@ -59,39 +79,14 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  const getDeterministicAvatarColor = (id, colorsArray) => {
-    if (!id || (typeof id !== "string" && typeof id !== "number")) {
-      return "bg-gray-400";
-    }
-
-    let hash = 0;
-    if (typeof id === "string") {
-      for (let i = 0; i < id.length; i++) {
-        hash = id.charCodeAt(i) + ((hash << 5) - hash);
-      }
-    } else if (typeof id === "number") {
-      hash = id;
-    }
-
-    const index = Math.abs(hash) % colorsArray.length;
-    return colorsArray[index];
-  };
-
-  const initials = `${complainant.firstName?.[0] || ""}${
-    complainant.lastName?.[0] || ""
-  }`.toUpperCase();
-
-  const avatarColorClass = getDeterministicAvatarColor(
-    complainant.id,
-    AVATAR_COLORS
-  );
-
   return (
     <Dialog open={true} onClose={onClose} maxWidth="md" fullWidth>
       <DialogContent className="overflow-y-auto flex flex-col gap-4">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-primary">Complaint Details</h2>
+          <h2 className="text-2xl font-bold text-primary">
+            {isBlotter ? "Blotter Details" : "Complaint Details"}
+          </h2>
           <IconButton
             onClick={onClose}
             size="small"
@@ -112,28 +107,30 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
               </div>
               <div>
                 <div className="text-sm font-medium text-text">
-                  {`${complainant.lastName}, ${complainant.firstName} ${complainant.middleName}`.trim()}
+                  {`${lastName}, ${firstName} ${middleName || ""}`.trim()}
                 </div>
-                {complainant.phoneNumber && (
+                {phoneNumber && (
                   <div className="text-xs text-text opacity-50">
-                    {complainant.phoneNumber}
+                    {phoneNumber}
                   </div>
                 )}
               </div>
             </div>
+
             <p className="text-right">
               <strong>Tracking ID:</strong> {trackingId || "N/A"}
             </p>
-            <div className="flex flex-col gap-2 ">
-              <p>
-                <strong>Proof Type:</strong>{" "}
-                {residencyProof
-                  .toLowerCase()
-                  .replace(/_/g, " ")
-                  .split(" ")
-                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                  .join(" ") || "N/A"}
-              </p>
+
+            <div className="flex flex-col gap-2">
+              {!isBlotter && (
+                <p>
+                  <strong>Proof Type:</strong>{" "}
+                  {residencyProof
+                    ?.toLowerCase()
+                    .replace(/_/g, " ")
+                    .replace(/\b\w/g, (c) => c.toUpperCase()) || "N/A"}
+                </p>
+              )}
               <div className="flex flex-wrap gap-4">
                 {["idFront", "idBack", "utility"].map(
                   (key) =>
@@ -155,16 +152,17 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
                 )}
               </div>
             </div>
+
             <p className="text-right">
-              <strong>Address:</strong> {complainant?.fullAddress || "N/A"}
+              <strong>Address:</strong> {effectiveLocation || "N/A"}
             </p>
           </div>
         </section>
 
-        {/* Complaint Info */}
+        {/* Info Section */}
         <section className="bg-white p-4 rounded-2xl shadow-xl shadow-primary/10 gap-2">
           <h3 className="text-xl font-semibold mb-2 flex justify-between items-center">
-            Complaint Info
+            {isBlotter ? "Blotter Info" : "Complaint Info"}
             <span
               className={`inline-block px-2 py-1 text-sm rounded font-medium ${
                 CATEGORY_COLORS[category] || "bg-gray-100 text-gray-700"
@@ -194,9 +192,8 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
                 <p className="text-gray-700">{subjectContext}</p>
               </div>
             )}
-
             <p className="col-span-2">
-              <strong>Incident Date:</strong>
+              <strong>Incident Date:</strong>{" "}
               {incidentDateTime
                 ? format(new Date(incidentDateTime), "PPP p")
                 : "N/A"}
@@ -226,11 +223,11 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
           )}
         </section>
 
-        {/* Actions */}
-        <div className="flex justify-between gap-2 ">
+        {/* Action Buttons */}
+        <div className="flex justify-between gap-2">
           <SecondaryButton onClick={onClose}>Close</SecondaryButton>
 
-          {status === "PENDING" && (
+          {!isBlotter && currentStatus === "PENDING" && (
             <div className="flex gap-2">
               <PrimaryButton
                 onClick={() => onAction("REJECT")}
@@ -238,15 +235,13 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
               >
                 Reject
               </PrimaryButton>
-              <PrimaryButton
-                onClick={() => onAction("IN_PROGRESS", complaint.id)}
-              >
+              <PrimaryButton onClick={() => onAction("IN_PROGRESS", id)}>
                 Mark as In Progress
               </PrimaryButton>
             </div>
           )}
 
-          {status === "IN_PROGRESS" && (
+          {!isBlotter && currentStatus === "IN_PROGRESS" && (
             <div className="flex gap-2">
               <PrimaryButton
                 onClick={() => onAction("REJECTED")}
@@ -267,7 +262,7 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
               {adminRole === "ADMIN" && (
                 <PrimaryButton
                   className="!bg-indigo-400"
-                  onClick={() => onAction("ESCALATED", complaint.id)}
+                  onClick={() => onAction("ESCALATED", id)}
                 >
                   Escalate to Blotter
                 </PrimaryButton>
@@ -285,7 +280,7 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
             <div
               className="relative"
               onClick={(e) => {
-                e.stopPropagation(); // Prevent closing modal
+                e.stopPropagation();
               }}
             >
               <img
@@ -293,9 +288,8 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
                 alt="Preview"
                 className="max-w-[90vw] max-h-[90vh] rounded-xl shadow-2xl"
               />
-              {/* Optional close button */}
               <button
-                className="absolute top-2 right-2 text-white bg-black/60 hover:bg-black/80 rounded-full p-1"
+                className="absolute top-2 right-2 aspect-square w-8 flex justify-center items-center cursor-pointer text-white bg-black/60 hover:bg-black/80 rounded-full"
                 onClick={() => setPreviewImage(null)}
               >
                 <CloseRounded fontSize="small" />
@@ -308,4 +302,22 @@ const ComplaintDetailModal = ({ complaint, adminRole, onClose, onAction }) => {
   );
 };
 
-export default ComplaintDetailModal;
+function getDeterministicAvatarColor(id, colorsArray) {
+  if (!id || (typeof id !== "string" && typeof id !== "number")) {
+    return "bg-gray-400";
+  }
+
+  let hash = 0;
+  if (typeof id === "string") {
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+  } else {
+    hash = id;
+  }
+
+  const index = Math.abs(hash) % colorsArray.length;
+  return colorsArray[index];
+}
+
+export default ReportDetailModal;

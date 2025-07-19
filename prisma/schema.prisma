@@ -74,6 +74,7 @@ enum HierarchyRole {
   SK_CHAIR
   SECRETARY
   CLERK
+  TANOD
 }
 
 model Barangay {
@@ -89,12 +90,14 @@ model Barangay {
 }
 
 model PendingAdmin {
-  id          String    @id @default(uuid())
-  name        String
-  email       String    @unique
-  phoneNumber String    @unique
-  password    String
-  createdAt   DateTime  @default(now())
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  phoneNumber   String    @unique
+  password      String
+  dashboardRole DashboardRole
+  hierarchyRole HierarchyRole
+  createdAt     DateTime  @default(now())
 }
 
 model Admin {
@@ -103,8 +106,8 @@ model Admin {
   email               String        @unique
   phoneNumber         String        @unique
   password            String
-  dashboardRole       DashboardRole @default(STAFF)
-  hierarchyRole       HierarchyRole @default(CLERK)
+  dashboardRole       DashboardRole
+  hierarchyRole       HierarchyRole
   createdAt           DateTime      @default(now())
 
   reviewedComplaints  Complaint[]   @relation("ReviewedComplaints")

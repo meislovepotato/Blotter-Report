@@ -8,3 +8,5 @@ export * from "./fetchBarangay";
 export * from "./validation";
 
 export * from "./complaint";
+
+export * from "./roleMapping";

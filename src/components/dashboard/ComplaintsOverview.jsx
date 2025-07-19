@@ -1,9 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ComplaintDetailModal, DataTable, FilterBar } from "@/components";
+import {
+  ComplaintDetailModal,
+  DataTable,
+  FilterBar,
+  ReportDetailModal,
+} from "@/components";
 import {
   AVATAR_COLORS,
   BLOTTER_CATEGORIES,
+  CATEGORY_COLORS,
   DEFAULT_FALLBACK_COLOR,
   STATUS_STYLES,
 } from "@/constants";
@@ -29,7 +35,10 @@ const getDeterministicAvatarColor = (id, colorsArray) => {
   return colorsArray[index];
 };
 
-const classifySeverity = (complaint) => complaint.severity || null;
+const classifySeverity = (complaint) => {
+  if (complaint.status === "ESCALATED") return null;
+  return complaint.severity || null;
+};
 
 const ComplaintsOverview = ({
   isCompact = false,
@@ -177,7 +186,15 @@ const ComplaintsOverview = ({
     {
       key: "category",
       header: "Category",
-      render: (value) => BLOTTER_CATEGORIES[value],
+      render: (value) => (
+        <span
+          className={`inline-block px-2 py-1 rounded-full font-medium ${
+            CATEGORY_COLORS[value] || "bg-gray-100 text-gray-700"
+          } bg-gray-100`}
+        >
+          {BLOTTER_CATEGORIES[value] || value || "N/A"}
+        </span>
+      ),
     },
     {
       key: "complainant",
@@ -282,8 +299,9 @@ const ComplaintsOverview = ({
         loading={loading}
       />
       {selectedComplaint && (
-        <ComplaintDetailModal
-          complaint={selectedComplaint}
+        <ReportDetailModal
+          type="complaint"
+          data={selectedComplaint}
           adminRole={dashboardRole}
           onClose={() => setSelectedComplaint(null)}
           onAction={handleAction}

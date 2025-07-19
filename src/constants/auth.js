@@ -1,6 +1,7 @@
 export const INITIAL_SIGNUP_DATA = {
   name: "",
   email: "",
+  hierarchyRole: "",
   phoneNumber: "",
   password: "",
   confirmPassword: "",
