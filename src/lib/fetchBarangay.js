@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma"; // updated import
+import prisma from "./prisma";
 
 export async function fetchBarangayInfo() {
   try {

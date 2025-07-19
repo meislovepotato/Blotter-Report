@@ -45,7 +45,7 @@ export default function FilterBar({ filters, setFilters, onApply, onClear }) {
   };
 
   return (
-    <div className="flex items-end w-full gap-4 mb-4 flex-wrap">
+    <div className="flex items-end w-full gap-4 flex-wrap">
       <TextField
         label="Search"
         size="small"

@@ -1,108 +1,99 @@
-export const runtime = "nodejs"; // 🛠 Ensure Prisma uses Node.js runtime
-
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { decryptBuffer, bufferToBase64DataUrl } from "@/lib/complaint";
+import { prisma } from "@/lib";
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const page = Math.max(parseInt(searchParams.get("page") || "1"), 1);
+    const limit = Math.min(
+      Math.max(parseInt(searchParams.get("limit") || "10"), 1),
+      100
+    );
     const status = searchParams.get("status");
 
-    const where = {};
-    if (status) where.status = status;
+    const where = status ? { status } : {};
 
-    const blotters = await prisma.blotter.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-      include: {
-        complainant: {
-          select: {
-            id: true,
-            firstName: true,
-            middleName: true,
-            lastName: true,
-            phoneNumber: true,
-            fullAddress: true,
-            residencyProof: true,
-            attachmentIDFront: true,
-            attachmentIDBack: true,
-            attachmentUtility: true,
+    // Fetch paginated blotters and total count
+    const [blotters, totalCount] = await Promise.all([
+      prisma.blotter.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          complainant: {
+            select: {
+              id: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              phoneNumber: true,
+              fullAddress: true,
+              residencyProof: true,
+              attachmentIDFront: true,
+              attachmentIDBack: true,
+              attachmentUtility: true,
+            },
+          },
+          attachments: {
+            select: {
+              id: true,
+              file: true,
+            },
+          },
+          fromComplaint: {
+            select: {
+              trackingId: true,
+              status: true,
+            },
           },
         },
-        attachments: true,
-        fromComplaint: {
-          select: { trackingId: true, status: true },
-        },
-      },
-    });
+      }),
+      prisma.blotter.count({ where }),
+    ]);
 
+    // Decrypt attachments and complainant files
     const enriched = await Promise.all(
       blotters.map(async (blotter) => {
         const decryptedAttachments = await Promise.all(
-          blotter.attachments.map(async (attachment) => {
+          blotter.attachments.map(async (att) => {
             try {
-              const decrypted = await decryptBuffer(attachment.file);
-              const dataUrl = await bufferToBase64DataUrl(decrypted);
-              return { ...attachment, file: dataUrl };
-            } catch (err) {
-              console.warn("Failed to decrypt blotter attachment:", err);
-              return { ...attachment, file: null };
+              const buf = await decryptBuffer(att.file);
+              return { id: att.id, file: await bufferToBase64DataUrl(buf) };
+            } catch {
+              return { id: att.id, file: null };
             }
           })
         );
 
         const c = blotter.complainant || {};
-        const enrichedComplainant = {
-          ...c,
-          attachmentIDFront: null,
-          attachmentIDBack: null,
-          attachmentUtility: null,
-        };
+        const enrichedComplainant = { ...c };
 
-        try {
-          if (c.attachmentIDFront) {
-            const decrypted = await decryptBuffer(c.attachmentIDFront);
-            enrichedComplainant.attachmentIDFront =
-              await bufferToBase64DataUrl(decrypted);
+        for (const key of [
+          "attachmentIDFront",
+          "attachmentIDBack",
+          "attachmentUtility",
+        ]) {
+          if (c[key]) {
+            try {
+              const buf = await decryptBuffer(c[key]);
+              enrichedComplainant[key] = await bufferToBase64DataUrl(buf);
+            } catch {
+              enrichedComplainant[key] = null;
+            }
+          } else {
+            enrichedComplainant[key] = null;
           }
-        } catch (err) {
-          console.warn("Failed to decrypt ID front:", err);
-        }
-
-        try {
-          if (c.attachmentIDBack) {
-            const decrypted = await decryptBuffer(c.attachmentIDBack);
-            enrichedComplainant.attachmentIDBack =
-              await bufferToBase64DataUrl(decrypted);
-          }
-        } catch (err) {
-          console.warn("Failed to decrypt ID back:", err);
-        }
-
-        try {
-          if (c.attachmentUtility) {
-            const decrypted = await decryptBuffer(c.attachmentUtility);
-            enrichedComplainant.attachmentUtility =
-              await bufferToBase64DataUrl(decrypted);
-          }
-        } catch (err) {
-          console.warn("Failed to decrypt utility bill:", err);
         }
 
         return {
           ...blotter,
-          attachments: decryptedAttachments,
           complainant: enrichedComplainant,
+          attachments: decryptedAttachments,
         };
       })
     );
-
-    const totalCount = await prisma.blotter.count({ where });
 
     return NextResponse.json({
       success: true,
@@ -114,8 +105,8 @@ export async function GET(request) {
         totalPages: Math.ceil(totalCount / limit),
       },
     });
-  } catch (err) {
-    console.error("Error fetching blotters:", err);
+  } catch (error) {
+    console.error("Error fetching blotters:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch blotters" },
       { status: 500 }

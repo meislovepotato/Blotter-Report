@@ -1,12 +1,15 @@
+import { prisma } from "@/lib";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const data = await prisma.blotterActivity.findMany({
+    const data = await prisma.blotterEvent.findMany({
       include: {
         admin: {
           select: { name: true },
+        },
+        blotter: {
+          select: { trackingId: true },
         },
       },
       orderBy: {

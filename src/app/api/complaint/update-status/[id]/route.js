@@ -1,12 +1,13 @@
+// /api/complaint/update-status/[id]/route.js
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
-import { verifyToken } from "@/lib";
+import { prisma, verifyToken } from "@/lib";
 import { triggerActivityFeed } from "@/lib/triggerActivityFeed";
 import { ComplaintStatus } from "@prisma/client";
 
-export async function PATCH(req, { params }) {
+export async function PATCH(req, context) {
   try {
+    const params = await context.params;
     const { id } = params;
     const { status } = await req.json();
 
@@ -21,7 +22,9 @@ export async function PATCH(req, { params }) {
       );
     }
 
-    const token = cookies().get("auth")?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth")?.value;
+
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -31,6 +34,7 @@ export async function PATCH(req, { params }) {
     const adminName = decoded?.name || "An admin";
 
     const complaint = await prisma.complaint.findUnique({ where: { id } });
+
     if (!complaint) {
       return NextResponse.json(
         { error: "Complaint not found" },
@@ -49,11 +53,15 @@ export async function PATCH(req, { params }) {
 
     triggerActivityFeed("complaint", id, status, adminName);
 
-    return NextResponse.json({ success: true, updatedComplaint });
+    return NextResponse.json({
+      success: true,
+      updatedComplaint,
+      message: "Status updated successfully",
+    });
   } catch (err) {
     console.error("Status update error:", err);
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "Something went wrong", message: err.message },
       { status: 500 }
     );
   } finally {
