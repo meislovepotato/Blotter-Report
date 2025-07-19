@@ -3,4 +3,4 @@ export { default as BlottersOverview } from "./BlottersOverview";
 
 export { default as PendingAdmins } from "./PendingAdmins";
 
-export { default as ComplaintDetailModal } from "./ComplaintDetailModal";
+export { default as ReportDetailModal } from "./ReportDetailModal";

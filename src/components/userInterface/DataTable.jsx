@@ -3,19 +3,19 @@ import { SeverityLevel } from "@/constants";
 import { useState, useEffect, useRef } from "react";
 
 const severityColorMap = {
-  [SeverityLevel.EMERGENCY]: "bg-red-100/40",
-  [SeverityLevel.URGENT]: "bg-orange-100/40",
-  [SeverityLevel.MODERATE]: "bg-yellow-100/40",
-  [SeverityLevel.MINOR]: "bg-green-100/40",
-  [SeverityLevel.INFORMATIONAL]: "bg-gray-100/40",
+  [SeverityLevel.EMERGENCY]: "bg-[#fdf3f3]", // near-white with a red tint
+  [SeverityLevel.URGENT]: "bg-[#fff8f0]", // ultra-light orange-beige
+  [SeverityLevel.MODERATE]: "bg-[#fffcf2]", // pale yellow-cream
+  [SeverityLevel.MINOR]: "bg-[#f6fdf8]", // hint of green
+  [SeverityLevel.INFORMATIONAL]: "bg-[#fafafa]", // plain soft gray-white
 };
 
 const severityHoverMap = {
-  [SeverityLevel.EMERGENCY]: "hover:bg-red-200/60",
-  [SeverityLevel.URGENT]: "hover:bg-orange-200/60",
-  [SeverityLevel.MODERATE]: "hover:bg-yellow-200/60",
-  [SeverityLevel.MINOR]: "hover:bg-green-200/60",
-  [SeverityLevel.INFORMATIONAL]: "hover:bg-gray-200/60",
+  [SeverityLevel.EMERGENCY]: "hover:bg-[#faeaea]", // still calm
+  [SeverityLevel.URGENT]: "hover:bg-[#fff2e2]", // warm but quiet
+  [SeverityLevel.MODERATE]: "hover:bg-[#fff9d5]", // soft butter yellow
+  [SeverityLevel.MINOR]: "hover:bg-[#eafbef]", // minty but faint
+  [SeverityLevel.INFORMATIONAL]: "hover:bg-[#f0f0f0]", // light gray hover
 };
 
 const SEVERITY_ORDER = {
@@ -45,7 +45,6 @@ const DataTable = ({
 
   const safeData = Array.isArray(data) ? data : [];
 
-  // Sort by severity (descending), then fallback to createdAt if needed
   const sortedData = [...safeData].sort((a, b) => {
     const aSeverity = SEVERITY_ORDER[a.severity] ?? 0;
     const bSeverity = SEVERITY_ORDER[b.severity] ?? 0;
@@ -97,8 +96,18 @@ const DataTable = ({
     };
   }, [data, columns, isCompact, maxRows]);
 
-  const getSeverityClass = (severity) => {
-    return severityColorMap[severity] || "";
+  const getSeverityClass = (row) => {
+    if (row.status === "ESCALATED") return "bg-gray-100";
+    return severityColorMap[row.severity] || "";
+  };
+
+  const getHoverClass = (row) => {
+    if (row.status === "ESCALATED") return "hover:bg-gray-200";
+    return severityHoverMap[row.severity] || "hover:bg-secondary/10";
+  };
+
+  const getTextClass = (row) => {
+    return row.status === "ESCALATED" ? "text-gray-500" : "text-text";
   };
 
   return (
@@ -160,11 +169,11 @@ const DataTable = ({
             </thead>
             <tbody>
               {displayData.map((row, idx) => {
-                const severityClass = getSeverityClass(row.severity);
+                const severityClass = getSeverityClass(row);
+                const hoverClass = getHoverClass(row);
+                const textClass = getTextClass(row);
                 const fallbackBg =
                   !severityClass && idx % 2 === 1 ? "bg-text/5" : "";
-                const hoverClass =
-                  severityHoverMap[row.severity] || "hover:bg-secondary/10";
 
                 return (
                   <tr
@@ -174,7 +183,7 @@ const DataTable = ({
                     onClick={() => onRowClick?.(row)}
                   >
                     {columns.map((col, colIdx) => (
-                      <td key={colIdx} className="p-2 text-text">
+                      <td key={colIdx} className={`p-2 ${textClass}`}>
                         {col.render
                           ? col.render(row[col.key], row)
                           : row[col.key]}

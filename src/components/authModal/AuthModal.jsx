@@ -7,6 +7,7 @@ import {
   DialogTitle,
   TextField,
   InputAdornment,
+  MenuItem,
 } from "@mui/material";
 import { useState } from "react";
 import { PrimaryButton, SecondaryButton } from "@/components";
@@ -123,6 +124,25 @@ const AuthModal = ({ open, onClose }) => {
               fullWidth
             />
             <TextField
+              select
+              label="Barangay Position"
+              name="hierarchyRole"
+              value={signupForm.hierarchyRole}
+              onChange={handleChange}
+              fullWidth
+            >
+              {["SECRETARY", "KAGAWAD", "SK_CHAIR", "CLERK", "TANOD"].map(
+                (role) => (
+                  <MenuItem key={role} value={role}>
+                    {role
+                      .toLowerCase()
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (char) => char.toUpperCase())}
+                  </MenuItem>
+                )
+              )}
+            </TextField>
+            <TextField
               label="Email"
               name="email"
               value={signupForm.email}
@@ -194,8 +214,8 @@ const AuthModal = ({ open, onClose }) => {
               ? "Logging in..."
               : "Submitting..."
             : mode === "login"
-            ? "Log In"
-            : "Sign Up"}
+              ? "Log In"
+              : "Sign Up"}
         </PrimaryButton>
 
         <span className="text-xs w-full text-center select-none text-text/60 md:text-sm">

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma, sendEmail } from "@/lib";
+import { prisma } from "@/lib";
+import { sendEmail } from "@/lib/server/sendEmail";
 
 export async function DELETE(req, { params }) {
   const { id } = params;

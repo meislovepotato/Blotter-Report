@@ -27,7 +27,7 @@ const AdminHomeView = () => {
         <h3 className="text-xs text-text font-semibold">Flagged Reports</h3>
       </div>
       <div className="row-span-6 col-span-4 p-4 rounded-2xl bg-background">
-        <PendingAdmins isCompact={true} />
+        {isViewable && <PendingAdmins isCompact={true} />}
       </div>
       <div className="row-span-3 col-span-6 p-4 rounded-2xl bg-background">
         <h3 className="text-xs text-text font-semibold">Weekly Reports</h3>

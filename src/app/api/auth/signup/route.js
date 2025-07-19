@@ -1,14 +1,44 @@
 import { NextResponse } from "next/server";
-import { hashPassword, prisma } from "@/lib";
+import { getDashboardRoleFor, hashPassword, prisma } from "@/lib";
 
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { name, email, phoneNumber, password, confirmPassword } = body;
+    const {
+      name,
+      email,
+      phoneNumber,
+      password,
+      confirmPassword,
+      hierarchyRole, // only this is from user
+    } = body;
 
-    if (!name || !email || !phoneNumber || !password || !confirmPassword) {
+    if (
+      !name ||
+      !email ||
+      !phoneNumber ||
+      !password ||
+      !confirmPassword ||
+      !hierarchyRole
+    ) {
       return NextResponse.json(
         { error: "All fields are required." },
+        { status: 400 }
+      );
+    }
+
+    if (hierarchyRole === "CAPTAIN") {
+      return NextResponse.json(
+        { error: "CAPTAIN role cannot be assigned manually." },
+        { status: 400 }
+      );
+    }
+
+    const dashboardRole = getDashboardRoleFor(hierarchyRole);
+
+    if (!dashboardRole) {
+      return NextResponse.json(
+        { error: "Invalid hierarchy role selected." },
         { status: 400 }
       );
     }
@@ -20,7 +50,6 @@ export async function POST(req) {
       );
     }
 
-    // Check if email/phone already exists in Admin or PendingAdmin
     const existingAdmin = await prisma.admin.findFirst({
       where: { OR: [{ email }, { phoneNumber }] },
     });
@@ -47,6 +76,8 @@ export async function POST(req) {
         email,
         phoneNumber,
         password: hashedPassword,
+        dashboardRole, // derived!
+        hierarchyRole,
       },
     });
 

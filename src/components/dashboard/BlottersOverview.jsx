@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DataTable, FilterBar } from "@/components";
-import {
-  AVATAR_COLORS,
-  BLOTTER_CATEGORIES,
-  DEFAULT_FALLBACK_COLOR,
-  STATUS_STYLES,
-} from "@/constants";
 import { useRouter } from "next/navigation";
 import { VisibilityRounded } from "@mui/icons-material";
 
+import { DataTable, FilterBar, ReportDetailModal } from "@/components";
+import {
+  AVATAR_COLORS,
+  BLOTTER_CATEGORIES,
+  CATEGORY_COLORS,
+  DEFAULT_FALLBACK_COLOR,
+  STATUS_STYLES,
+} from "@/constants";
+
+// Avatar color generator
 const getDeterministicAvatarColor = (id, colorsArray) => {
   if (!id || (typeof id !== "string" && typeof id !== "number")) {
     return DEFAULT_FALLBACK_COLOR;
@@ -27,16 +30,22 @@ const getDeterministicAvatarColor = (id, colorsArray) => {
   return colorsArray[index];
 };
 
-const BlotterOverview = ({ isCompact = false }) => {
+const BlotterOverview = ({
+  isCompact = false,
+  dashboardRole = "clerk", // ⬅ Default fallback
+  handleAction = () => {}, // ⬅ No-op if not passed
+  isViewable,
+}) => {
   const [blotters, setBlotters] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [selectedBlotter, setSelectedBlotter] = useState(null);
   const [filters, setFilters] = useState({
     q: "",
     category: "",
     dateFrom: "",
     dateTo: "",
   });
+
   const router = useRouter();
 
   const fetchBlotters = async (showLoading = false) => {
@@ -52,27 +61,27 @@ const BlotterOverview = ({ isCompact = false }) => {
       console.error("Blotter fetch failed:", err);
     } finally {
       if (showLoading) setLoading(false);
-      if (isInitialLoad) {
-        setIsInitialLoad(false);
-        setLoading(false);
-      }
     }
   };
 
   useEffect(() => {
-    let active = true;
+    let isMounted = true;
+    let timeoutId;
 
     const loopFetch = async () => {
-      if (!active) return;
+      if (!isMounted) return;
       await fetchBlotters(false);
-      if (active) setTimeout(loopFetch, 5000);
+      if (isMounted) {
+        timeoutId = setTimeout(loopFetch, 5000);
+      }
     };
 
     fetchBlotters(true);
     loopFetch();
 
     return () => {
-      active = false;
+      isMounted = false;
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -112,16 +121,22 @@ const BlotterOverview = ({ isCompact = false }) => {
           {value
             .toLowerCase()
             .replace(/_/g, " ")
-            .split(" ")
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ")}
+            .replace(/\b\w/g, (char) => char.toUpperCase())}
         </span>
       ),
     },
     {
       key: "category",
       header: "Category",
-      render: (value) => BLOTTER_CATEGORIES[value] || value,
+      render: (value) => (
+        <span
+          className={`inline-block px-2 py-1 rounded-full font-medium ${
+            CATEGORY_COLORS[value] || "bg-gray-100 text-gray-700"
+          } bg-gray-100`}
+        >
+          {BLOTTER_CATEGORIES[value] || value || "N/A"}
+        </span>
+      ),
     },
     {
       key: "complainant",
@@ -129,22 +144,22 @@ const BlotterOverview = ({ isCompact = false }) => {
       render: (_, row) => {
         const c = row.complainant || {};
         const initials =
-          `${c?.firstName?.[0] || ""}${c?.lastName?.[0] || ""}`.toUpperCase();
-        const avatarColor = getDeterministicAvatarColor(c?.id, AVATAR_COLORS);
+          `${c.firstName?.[0] || ""}${c.lastName?.[0] || ""}`.toUpperCase();
+        const avatarColor = getDeterministicAvatarColor(c.id, AVATAR_COLORS);
 
         return (
           <div className="flex items-center space-x-2">
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold ${avatarColor}`}
-              title={`${c?.firstName || ""} ${c?.lastName || ""}`.trim()}
+              title={`${c.firstName || ""} ${c.lastName || ""}`.trim()}
             >
               {initials}
             </div>
             <div>
               <div className="text-xs font-medium text-text">
-                {`${c?.lastName || ""}, ${c?.firstName || ""} ${c?.middleName || ""}`.trim()}
+                {`${c.lastName || ""}, ${c.firstName || ""} ${c.middleName || ""}`.trim()}
               </div>
-              {c?.phoneNumber && (
+              {c.phoneNumber && (
                 <div className="text-[0.625rem] text-text opacity-50">
                   {c.phoneNumber}
                 </div>
@@ -183,8 +198,11 @@ const BlotterOverview = ({ isCompact = false }) => {
             header: "Actions",
             render: (_, row) => (
               <button
-                onClick={() => router.push(`/admin/blotter/${row.id}`)}
-                className="text-primary hover:text-accent cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedBlotter(row);
+                }}
+                className="text-primary px-2 items-center hover:text-accent cursor-pointer"
               >
                 <VisibilityRounded />
               </button>
@@ -199,21 +217,31 @@ const BlotterOverview = ({ isCompact = false }) => {
         <FilterBar
           filters={filters}
           setFilters={setFilters}
-          onApply={() => {}}
-          onClear={() =>
-            setFilters({ q: "", category: "", dateFrom: "", dateTo: "" })
-          }
+          onApply={() => fetchBlotters(true)}
+          onClear={() => {
+            setFilters({ q: "", category: "", dateFrom: "", dateTo: "" });
+            fetchBlotters(true);
+          }}
         />
       )}
       <DataTable
         data={filtered}
         columns={columns}
         isCompact={isCompact}
-        isViewable={true}
+        isViewable={isViewable}
         viewMore={() => router.push("/admin/blotter")}
         title="Blotter Overview"
         loading={loading}
       />
+      {selectedBlotter && (
+        <ReportDetailModal
+          type="blotter"
+          data={selectedBlotter}
+          adminRole={dashboardRole}
+          onClose={() => setSelectedBlotter(null)}
+          onAction={handleAction}
+        />
+      )}
     </>
   );
 };

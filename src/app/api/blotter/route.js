@@ -1,3 +1,5 @@
+export const runtime = "nodejs"; // 🛠 Ensure Prisma uses Node.js runtime
+
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { decryptBuffer, bufferToBase64DataUrl } from "@/lib/complaint";
@@ -41,7 +43,6 @@ export async function GET(request) {
 
     const enriched = await Promise.all(
       blotters.map(async (blotter) => {
-        // Decrypt attachments
         const decryptedAttachments = await Promise.all(
           blotter.attachments.map(async (attachment) => {
             try {
@@ -63,7 +64,6 @@ export async function GET(request) {
           attachmentUtility: null,
         };
 
-        // Decrypt complainant attachments if available
         try {
           if (c.attachmentIDFront) {
             const decrypted = await decryptBuffer(c.attachmentIDFront);
@@ -120,7 +120,5 @@ export async function GET(request) {
       { success: false, error: "Failed to fetch blotters" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
