@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import prisma from "@/lib/prisma";
-import { verifyToken } from "@/lib";
+import { prisma, verifyToken } from "@/lib";
 import { triggerActivityFeed } from "@/lib/triggerActivityFeed";
 
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const { complaintId } = body;
-
+    const { complaintId } = await req.json();
     if (!complaintId) {
       return NextResponse.json(
         { error: "Missing complaintId" },
@@ -20,22 +17,20 @@ export async function POST(req) {
     if (!token)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const decoded = await verifyToken(token);
-    const adminId = decoded?.id || decoded?.adminId;
-    const adminName = decoded?.name || "An admin";
-
+    const { id: adminId, name: adminName = "An admin" } =
+      (await verifyToken(token)) || {};
     if (!adminId)
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
     const complaint = await prisma.complaint.findUnique({
       where: { id: complaintId },
     });
-
-    if (!complaint)
+    if (!complaint) {
       return NextResponse.json(
         { error: "Complaint not found" },
         { status: 404 }
       );
+    }
 
     const blotter = await prisma.blotter.create({
       data: {
@@ -57,13 +52,11 @@ export async function POST(req) {
       data: {
         status: "ESCALATED",
         escalatedAt: new Date(),
-        updatedAt: new Date(),
         reviewedByAdmin: { connect: { id: adminId } },
         blotter: { connect: { id: blotter.id } },
       },
     });
 
-    // ✅ Send to live feed
     triggerActivityFeed("complaint", complaintId, "ESCALATED", adminName);
 
     return NextResponse.json({ success: true, updatedComplaint });

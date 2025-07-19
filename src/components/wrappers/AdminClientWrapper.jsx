@@ -8,21 +8,29 @@ export default function AdminClientWrapper({ user, children }) {
   const pathname = usePathname();
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
+  const [hydratedUser, setHydratedUser] = useState(null);
 
   useEffect(() => {
+    // Hydrate safely after client loads
+    setHydratedUser(user);
+  }, [user]);
+
+  useEffect(() => {
+    if (!hydratedUser) return;
+
     const restrictedPaths = ["/admin/users", "/admin/blotters"];
     const isRestricted = restrictedPaths.some((path) =>
       pathname.startsWith(path)
     );
 
-    if (isRestricted && user.dashboardRole !== "ADMIN") {
+    if (isRestricted && hydratedUser.dashboardRole !== "ADMIN") {
       router.replace("/admin");
     } else {
       setAuthorized(true);
     }
-  }, [pathname, user.dashboardRole, router]);
+  }, [pathname, hydratedUser, router]);
 
-  if (!authorized) return null; // or return a loading spinner
+  if (!authorized) return null;
 
-  return <UserProvider user={user}>{children}</UserProvider>;
+  return <UserProvider user={hydratedUser}>{children}</UserProvider>;
 }

@@ -19,26 +19,31 @@ const LiveActivityFeed = () => {
         fetch("/api/events/blotters"),
       ]);
 
-      if (!complaintRes.ok || !blotterRes.ok) {
-        throw new Error("Failed to fetch one or both event types");
-      }
+      if (!complaintRes.ok) throw new Error("Failed to fetch complaint events");
+      if (!blotterRes.ok) throw new Error("Failed to fetch blotter events");
 
-      const { data: complaintEvents = [] } = await complaintRes.json();
-      const { data: blotterEvents = [] } = await blotterRes.json();
+      const complaintJson = await complaintRes.json();
+      const blotterJson = await blotterRes.json();
+
+      console.log("Complaint Res:", complaintJson);
+      console.log("Blotter Res:", blotterJson);
+
+      const { data: complaintEvents = [] } = complaintJson;
+      const { data: blotterEvents = [] } = blotterJson;
 
       const normalized = [
         ...complaintEvents.map((e) => ({
           id: e.id,
-          type: "complaint",
-          relatedId: e.complaintId,
+          trackingId: e.complaint?.trackingId ?? "N/A",
           action: e.action,
-          adminName: e.admin?.name ?? "Unknown Admin",
+          adminName:
+            e.admin?.name ??
+            `${e.complaint?.complainant?.firstName ?? "Unknown"} ${e.complaint?.complainant?.lastName ?? ""}`.trim(),
           timestamp: new Date(e.createdAt),
         })),
         ...blotterEvents.map((e) => ({
           id: e.id,
-          type: "blotter",
-          relatedId: e.blotterId,
+          trackingId: e.blotter?.trackingId ?? "N/A",
           action: e.action,
           adminName: e.admin?.name ?? "Unknown Admin",
           timestamp: new Date(e.createdAt),
@@ -58,6 +63,7 @@ const LiveActivityFeed = () => {
 
   useEffect(() => {
     fetchEvents();
+
     const handler = () => fetchEvents();
     emitter.addEventListener("activityFeedUpdated", handler);
 
@@ -78,24 +84,44 @@ const LiveActivityFeed = () => {
     return <div className="text-red-500 text-sm text-center py-4">{error}</div>;
   }
 
+  const formatTimestamp = (val) => {
+    const date = new Date(val || new Date());
+    return `${date.toLocaleDateString("en-US", {
+      month: "long",
+      day: "2-digit",
+      year: "numeric",
+    })} ${date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })}`;
+  };
+
   return (
-    <div className="space-y-3">
-      {events.map((event) => (
-        <div
-          key={event.id}
-          className="text-sm bg-gray-100 px-4 py-2 rounded-md border border-gray-200"
-        >
-          <span className="font-medium">{event.adminName}</span>{" "}
-          {event.action.toLowerCase()}{" "}
-          <span className="italic text-gray-600">
-            [{event.type} #{event.relatedId}]
-          </span>
-          <div className="text-xs text-gray-500">
-            {event.timestamp.toLocaleString()}
+    <>
+      <h3 className="flex flex-col text-sm text-text font-semibold">
+        Live Activity Feed
+      </h3>
+      <div className="space-y-3">
+        {events.map((event) => (
+          <div
+            key={event.id}
+            className="text-sm bg-gray-100 px-4 py-2 rounded-md border border-gray-200"
+          >
+            <span className="flex flex-row gap-1">
+              <span className="font-medium">{event.adminName}</span>
+              {event.action.toLowerCase()}
+              <span className="italic text-gray-600">
+                {event.type} #{event.trackingId}
+              </span>
+            </span>
+            <div className="text-xs text-gray-500 w-full text-right">
+              {formatTimestamp(event.timestamp)}
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 };
 

@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { VisibilityRounded } from "@mui/icons-material";
-
 import { DataTable, FilterBar, ReportDetailModal } from "@/components";
 import {
   AVATAR_COLORS,
@@ -12,8 +11,8 @@ import {
   DEFAULT_FALLBACK_COLOR,
   STATUS_STYLES,
 } from "@/constants";
+import { Alert, Snackbar } from "@mui/material";
 
-// Avatar color generator
 const getDeterministicAvatarColor = (id, colorsArray) => {
   if (!id || (typeof id !== "string" && typeof id !== "number")) {
     return DEFAULT_FALLBACK_COLOR;
@@ -32,8 +31,7 @@ const getDeterministicAvatarColor = (id, colorsArray) => {
 
 const BlotterOverview = ({
   isCompact = false,
-  dashboardRole = "clerk", // ⬅ Default fallback
-  handleAction = () => {}, // ⬅ No-op if not passed
+  dashboardRole = "clerk",
   isViewable,
 }) => {
   const [blotters, setBlotters] = useState([]);
@@ -45,45 +43,78 @@ const BlotterOverview = ({
     dateFrom: "",
     dateTo: "",
   });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
+  const [limit, setLimit] = useState(10);
 
+  const containerRef = useRef(null);
   const router = useRouter();
 
-  const fetchBlotters = async (showLoading = false) => {
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const fetchBlotters = async (
+    showLoading = false,
+    page = 1,
+    limitVal = 10
+  ) => {
     if (showLoading) setLoading(true);
     try {
-      const res = await fetch("/api/blotter?include=complainant");
+      const res = await fetch(
+        `/api/blotter?include=complainant&page=${page}&limit=${limitVal}`
+      );
       const data = await res.json();
       if (!data.success || !Array.isArray(data.data)) {
         throw new Error(data.error || "Invalid response format");
       }
+
       setBlotters(data.data);
+      setPagination({
+        page: data.pagination?.page || 1,
+        totalPages: data.pagination?.totalPages || 1,
+      });
     } catch (err) {
       console.error("Blotter fetch failed:", err);
+      showSnackbar("Failed to load blotters", "error");
     } finally {
-      if (showLoading) setLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    let isMounted = true;
-    let timeoutId;
+    if (!isCompact) {
+      const observer = new ResizeObserver(() => {
+        if (containerRef.current) {
+          const height = containerRef.current.offsetHeight;
+          const rowHeight = 60;
+          const visibleRows = Math.floor(height / rowHeight);
+          setLimit(visibleRows);
+        }
+      });
+      if (containerRef.current) observer.observe(containerRef.current);
+      return () => observer.disconnect();
+    }
+  }, [isCompact]);
 
-    const loopFetch = async () => {
-      if (!isMounted) return;
-      await fetchBlotters(false);
-      if (isMounted) {
-        timeoutId = setTimeout(loopFetch, 5000);
-      }
-    };
+  useEffect(() => {
+    if (!isCompact && limit > 0) {
+      fetchBlotters(true, 1, limit); // load page 1
+      setPagination((prev) => ({ ...prev, page: 1 }));
+    } else if (isCompact) {
+      fetchBlotters(true);
+    }
+  }, [limit, isCompact]);
 
-    fetchBlotters(true);
-    loopFetch();
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
-    };
-  }, []);
+  useEffect(() => {
+    if (!isCompact && limit > 0) {
+      fetchBlotters(true, pagination.page, limit);
+    }
+  }, [pagination.page]);
 
   const from = filters.dateFrom ? new Date(filters.dateFrom) : null;
   const to = filters.dateTo ? new Date(filters.dateTo) : null;
@@ -119,9 +150,9 @@ const BlotterOverview = ({
           className={`px-2 py-1 rounded-full text-xs ${STATUS_STYLES[value] || STATUS_STYLES.DEFAULT}`}
         >
           {value
-            .toLowerCase()
             .replace(/_/g, " ")
-            .replace(/\b\w/g, (char) => char.toUpperCase())}
+            .toLowerCase()
+            .replace(/\b\w/g, (l) => l.toUpperCase())}
         </span>
       ),
     },
@@ -132,7 +163,7 @@ const BlotterOverview = ({
         <span
           className={`inline-block px-2 py-1 rounded-full font-medium ${
             CATEGORY_COLORS[value] || "bg-gray-100 text-gray-700"
-          } bg-gray-100`}
+          }`}
         >
           {BLOTTER_CATEGORIES[value] || value || "N/A"}
         </span>
@@ -146,12 +177,10 @@ const BlotterOverview = ({
         const initials =
           `${c.firstName?.[0] || ""}${c.lastName?.[0] || ""}`.toUpperCase();
         const avatarColor = getDeterministicAvatarColor(c.id, AVATAR_COLORS);
-
         return (
           <div className="flex items-center space-x-2">
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold ${avatarColor}`}
-              title={`${c.firstName || ""} ${c.lastName || ""}`.trim()}
             >
               {initials}
             </div>
@@ -212,37 +241,76 @@ const BlotterOverview = ({
   ];
 
   return (
-    <>
+    <div className="flex flex-col flex-1 h-full gap-4">
       {!isCompact && (
         <FilterBar
           filters={filters}
           setFilters={setFilters}
-          onApply={() => fetchBlotters(true)}
+          onApply={() => fetchBlotters(true, pagination.page, limit)}
           onClear={() => {
             setFilters({ q: "", category: "", dateFrom: "", dateTo: "" });
-            fetchBlotters(true);
+            fetchBlotters(true, pagination.page, limit);
           }}
         />
       )}
-      <DataTable
-        data={filtered}
-        columns={columns}
-        isCompact={isCompact}
-        isViewable={isViewable}
-        viewMore={() => router.push("/admin/blotter")}
-        title="Blotter Overview"
-        loading={loading}
-      />
+      <div
+        ref={containerRef}
+        className="flex flex-col flex-1 h-full justify-between"
+      >
+        <DataTable
+          data={filtered}
+          columns={columns}
+          isCompact={isCompact}
+          isViewable={isViewable}
+          viewMore={() => router.push("/admin/blotter")}
+          title="Blotter Overview"
+          loading={loading}
+        />
+        {!isCompact && (
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              disabled={pagination.page === 1}
+              onClick={() =>
+                setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
+              }
+              className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              disabled={pagination.page === pagination.totalPages}
+              onClick={() =>
+                setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
+              }
+              className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
       {selectedBlotter && (
         <ReportDetailModal
           type="blotter"
           data={selectedBlotter}
           adminRole={dashboardRole}
           onClose={() => setSelectedBlotter(null)}
-          onAction={handleAction}
         />
       )}
-    </>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </div>
   );
 };
 

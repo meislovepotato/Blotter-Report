@@ -47,43 +47,30 @@ const ComplaintForm = () => {
       return;
     }
 
-    // Step 3: Convert incident attachments to base64
+    // Convert attachments to base64
     if (formData.complaintAttachment?.length) {
-      console.log("Incident attachments (raw):", formData.complaintAttachment);
       transformData.complaintAttachment = await Promise.all(
         formData.complaintAttachment.map((fileObj) =>
           fileToBase64(fileObj.file)
         )
       );
-      console.log("Encoded attachments:", formData.complaintAttachment);
     }
 
-    // Always base64-encode individual proof files
     if (formData.attachmentIDFront) {
-      console.log("attachmentIDFront (raw):", formData.attachmentIDFront);
       transformData.attachmentIDFront = await fileToBase64(
         formData.attachmentIDFront
       );
-      console.log(
-        "Encoded attachmentIDFront:",
-        transformData.attachmentIDFront
-      );
     }
+
     if (formData.attachmentIDBack) {
-      console.log("attachmentIDBack (raw):", formData.attachmentIDBack);
       transformData.attachmentIDBack = await fileToBase64(
         formData.attachmentIDBack
       );
-      console.log("Encoded attachmentIDBack:", transformData.attachmentIDBack);
     }
+
     if (formData.attachmentUtility) {
-      console.log("attachmentUtility (raw):", formData.attachmentUtility);
       transformData.attachmentUtility = await fileToBase64(
         formData.attachmentUtility
-      );
-      console.log(
-        "Encoded attachmentUtility:",
-        transformData.attachmentUtility
       );
     }
 
@@ -94,12 +81,6 @@ const ComplaintForm = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(transformData),
         });
-
-        if (typeof window !== "undefined") {
-          const channel = new BroadcastChannel("complaint-updates");
-          channel.postMessage("refresh");
-          channel.close(); // optional but tidy
-        }
 
         if (!res.ok) throw new Error("Submission failed");
 
@@ -121,18 +102,15 @@ const ComplaintForm = () => {
     } else {
       setActiveStep((prev) => prev + 1);
     }
-    console.log("Submitting data:", transformData.severity);
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full h-full min-h-100 max-h-167 bg-background max-w-2xl mx-auto py-6 px-8 shadow-2xl shadow-text/10 rounded-3xl ">
+    <div className="flex flex-col gap-4 w-full h-full min-h-100 max-h-167 bg-background max-w-2xl mx-auto py-6 px-8 shadow-2xl shadow-text/10 rounded-3xl">
       <FormStepper steps={steps} activeStep={activeStep} />
       <form
         className="flex flex-col gap-4 w-full flex-1 min-h-0"
         onSubmit={handleSubmit}
       >
-        {/* Steps */}
-
         <div className="w-full flex-1">
           {activeStep === 0 && (
             <PersonalInfo formData={formData} setFormData={setFormData} />
@@ -149,13 +127,13 @@ const ComplaintForm = () => {
           {activeStep === 4 && <Review formData={formData} />}
         </div>
 
-        {/* Navigation */}
         <FormNavigation
           activeStep={activeStep}
           setActiveStep={setActiveStep}
           isSubmit
         />
       </form>
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
