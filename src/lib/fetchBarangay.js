@@ -1,3 +1,5 @@
+import prisma from "@/lib/prisma"; // updated import
+
 export async function fetchBarangayInfo() {
   try {
     const res = await fetch("/api/barangay");

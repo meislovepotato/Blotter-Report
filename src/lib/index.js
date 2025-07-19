@@ -10,3 +10,5 @@ export * from "./validation";
 export * from "./complaint";
 
 export * from "./roleMapping";
+
+export { default as emitter } from "./eventEmitter";

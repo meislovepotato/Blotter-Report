@@ -2,48 +2,40 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib";
+import { triggerActivityFeed } from "@/lib/triggerActivityFeed";
 
 export async function POST(req) {
   try {
     const body = await req.json();
-    console.log("🚀 Incoming escalate request body:", body);
-
     const { complaintId } = body;
 
     if (!complaintId) {
-      console.warn("⚠️ Missing complaintId");
       return NextResponse.json(
         { error: "Missing complaintId" },
         { status: 400 }
       );
     }
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth")?.value;
-    console.log("🔐 Token from cookie:", token);
-    if (!token) {
-      console.warn("❌ No token provided");
+
+    const token = cookies().get("auth")?.value;
+    if (!token)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const decoded = await verifyToken(token);
-    console.log("🔓 Decoded token:", decoded);
     const adminId = decoded?.id || decoded?.adminId;
+    const adminName = decoded?.name || "An admin";
 
-    if (!adminId) {
-      console.warn("❌ Invalid token structure");
+    if (!adminId)
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
 
     const complaint = await prisma.complaint.findUnique({
       where: { id: complaintId },
     });
-    if (!complaint) {
-      console.warn("❌ Complaint not found for ID:", complaintId);
+
+    if (!complaint)
       return NextResponse.json(
         { error: "Complaint not found" },
         { status: 404 }
       );
-    }
 
     const blotter = await prisma.blotter.create({
       data: {
@@ -59,7 +51,6 @@ export async function POST(req) {
         updatedByAdminId: adminId,
       },
     });
-    console.log("📄 Blotter created:", blotter);
 
     const updatedComplaint = await prisma.complaint.update({
       where: { id: complaintId },
@@ -72,7 +63,9 @@ export async function POST(req) {
       },
     });
 
-    console.log("✅ Complaint escalated:", updatedComplaint);
+    // ✅ Send to live feed
+    triggerActivityFeed("complaint", complaintId, "ESCALATED", adminName);
+
     return NextResponse.json({ success: true, updatedComplaint });
   } catch (error) {
     console.error("💥 Escalation error:", error);
