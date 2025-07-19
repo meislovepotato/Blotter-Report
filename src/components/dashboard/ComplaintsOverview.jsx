@@ -72,15 +72,12 @@ const ComplaintsOverview = ({
       const endpoint =
         actionType === "ESCALATED"
           ? "/api/complaint/escalate"
-          : "/api/complaint/status";
+          : `/api/complaint/update-status/${complaintId}`;
 
-      const payload =
-        actionType === "ESCALATED"
-          ? { complaintId }
-          : { complaintId, status: actionType };
+      const payload = { status: actionType };
 
       const res = await fetch(endpoint, {
-        method: "POST",
+        method: "PATCH", // PATCH is more semantically correct for partial updates
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(payload),
@@ -126,8 +123,6 @@ const ComplaintsOverview = ({
   useEffect(() => {
     fetchComplaints(true); // Initial load
 
-    const interval = setInterval(() => fetchComplaints(false), 5000);
-
     const channel = new BroadcastChannel("complaint-updates");
     let debounceTimer = null;
     channel.onmessage = () => {
@@ -136,7 +131,6 @@ const ComplaintsOverview = ({
     };
 
     return () => {
-      clearInterval(interval);
       channel.close();
     };
   }, []);

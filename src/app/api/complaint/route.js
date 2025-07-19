@@ -13,11 +13,15 @@ import {
 
 const prisma = new PrismaClient();
 
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
 
 export async function POST(req) {
   try {
     const data = await req.json();
+    const phoneNumber = data.phoneNumber;
 
     const {
       attachmentIDFront,
@@ -91,12 +95,37 @@ export async function POST(req) {
       },
     });
 
+    // Log the complaint creation in complaintActivity
+    await prisma.complaintEvent.create({
+      data: {
+        complaintId: complaint.id,
+        action: "created complaint",
+        adminId: null,
+      },
+    });
+
+    // ✅ Broadcast to activity feed
+    const feedChannel = new BroadcastChannel("activity-feed");
+    feedChannel.postMessage({
+      type: "complaint",
+      action: "created",
+      complaintId: complaint.id,
+      name: data.firstName + " " + data.lastName,
+      timestamp: new Date().toISOString(),
+    });
+    feedChannel.close();
+
+    // 🔁 Broadcast to refresh complaint table
+    const tableChannel = new BroadcastChannel("complaint-updates");
+    tableChannel.postMessage("new-complaint");
+    tableChannel.close();
+
     await twilioClient.messages.create({
-    body: `Your complaint has been submitted. Tracking ID: ${complaint.trackingId}`,
-    from: process.env.TWILIO_PHONE_NUMBER,
-    to: `+63${phoneNumber.replace(/^0/, "")}`,
-  });
-  
+      body: `Your complaint has been submitted. Tracking ID: ${complaint.trackingId}`,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: `+63${phoneNumber.replace(/^0/, "")}`,
+    });
+
     for (const file of complaintAttachment) {
       try {
         const encrypted = await encryptBuffer(base64ToBuffer(file));
