@@ -271,6 +271,18 @@ const ReportDetailModal = ({
               )}
             </div>
           )}
+          {!isBlotter && currentStatus === "ESCALATION_REQUESTED" && (
+            <div className="flex gap-2">
+              {adminRole === "ADMIN" && (
+                <PrimaryButton
+                  className="!bg-indigo-400"
+                  onClick={() => onAction("ESCALATED", id)}
+                >
+                  Escalate to Blotter
+                </PrimaryButton>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Fullscreen Image Preview */}

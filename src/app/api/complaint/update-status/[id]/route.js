@@ -2,8 +2,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma, verifyToken } from "@/lib";
-import { triggerActivityFeed } from "@/lib/triggerActivityFeed";
 import { ComplaintStatus } from "@prisma/client";
+import createSocketClient from "@/lib/createSocketClient";
 
 export async function PATCH(req, context) {
   try {
@@ -51,7 +51,24 @@ export async function PATCH(req, context) {
       },
     });
 
-    triggerActivityFeed("complaint", id, status, adminName);
+    console.log("STATUS CHANGED");
+
+    await prisma.complaintEvent.create({
+      data: {
+        complaintId: complaint.id,
+        action: "updated complaint",
+        adminId: adminId,
+      },
+    });
+
+    const socket = createSocketClient();
+    if (socket) {
+      socket.emit("complaint-updated", {
+        id,
+        status,
+      });
+      console.log("✅ complaint-updated event emitted");
+    }
 
     return NextResponse.json({
       success: true,

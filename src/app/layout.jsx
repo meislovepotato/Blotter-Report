@@ -3,6 +3,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "@/styles/theme";
 import { getBarangayInfoServer } from "@/lib";
+import { SocketProvider } from "@/context";
 
 export async function generateMetadata() {
   const barangayInfo = await getBarangayInfoServer();
@@ -21,10 +22,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          {children}
-        </ThemeProvider>
+        <SocketProvider>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            {children}
+          </ThemeProvider>
+        </SocketProvider>
       </body>
     </html>
   );

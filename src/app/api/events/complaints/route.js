@@ -30,7 +30,5 @@ export async function GET() {
   } catch (err) {
     console.error("Failed to fetch complaint events:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
