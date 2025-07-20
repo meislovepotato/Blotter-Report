@@ -13,6 +13,7 @@ import { useState } from "react";
 import { Snackbar, Alert } from "@mui/material";
 import { INITIAL_FORM_DATA } from "@/constants";
 import { fileToBase64, stepSchemas } from "@/lib";
+import { useSocket } from "@/context";
 
 const steps = [
   "Personal Info",
@@ -31,6 +32,8 @@ const ComplaintForm = () => {
     message: "",
     severity: "error",
   });
+
+  const socket = useSocket();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -89,6 +92,14 @@ const ComplaintForm = () => {
           message: "Complaint submitted successfully!",
           severity: "success",
         });
+
+        if (socket) {
+          socket.emit("complaint-created", {
+            timestamp: Date.now(),
+            message: "New complaint submitted!",
+          });
+          console.log("✅ complaint-created event emitted");
+        }
 
         setFormData(INITIAL_FORM_DATA);
         setActiveStep(0);

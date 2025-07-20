@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import { VisibilityRounded } from "@mui/icons-material";
 import { Alert, Snackbar } from "@mui/material";
+import { useSocket } from "@/context";
 
 const getDeterministicAvatarColor = (id, colorsArray) => {
   if (!id || (typeof id !== "string" && typeof id !== "number")) {
@@ -167,9 +168,27 @@ const ComplaintsOverview = ({
     }
   }, [limit, isCompact]);
 
+  const socket = useSocket();
   useEffect(() => {
-    fetchComplaints(true, pagination.page, limit);
-  }, [pagination.page]);
+    if (!socket) return;
+
+    const handleNewComplaint = () => {
+      console.log("Complaint created - refetching...");
+      fetchComplaints(false, pagination.page, limit);
+    };
+
+    const handleStatusUpdate = () => {
+      console.log("🔄 Complaint status updated - refetching...");
+      fetchComplaints(false, pagination.page, limit);
+    };
+
+    socket.on("complaint-created", handleNewComplaint);
+    socket.on("complaint-updated", handleStatusUpdate);
+    return () => {
+      socket.off("complaint-created", handleNewComplaint);
+      socket.off("complaint-updated", handleStatusUpdate);
+    };
+  }, [socket, pagination.page, limit]);
 
   const from = filters.dateFrom ? new Date(filters.dateFrom) : null;
   const to = filters.dateTo ? new Date(filters.dateTo) : null;
