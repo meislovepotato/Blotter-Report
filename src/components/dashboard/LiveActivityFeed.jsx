@@ -1,13 +1,39 @@
 "use client";
 
+import { useSocket } from "@/context";
 import { emitter } from "@/lib";
 import { CircularProgress } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const LiveActivityFeed = () => {
+  const containerRef = useRef(null);
   const [events, setEvents] = useState([]);
+  const [limit, setLimit] = useState(3);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const calculateLimit = () => {
+    if (containerRef.current) {
+      const containerHeight = containerRef.current.clientHeight;
+      const headerHeight = 40;
+      const availableHeight = containerHeight - headerHeight;
+      const itemHeight = 70;
+      const newLimit = Math.max(1, Math.floor(availableHeight / itemHeight));
+
+      if (newLimit !== limit) {
+        setLimit(newLimit);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const observer = new ResizeObserver(calculateLimit);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+      setTimeout(calculateLimit, 100);
+    }
+    return () => observer.disconnect();
+  }, []);
 
   const fetchEvents = async () => {
     try {
@@ -15,8 +41,8 @@ const LiveActivityFeed = () => {
       setError(null);
 
       const [complaintRes, blotterRes] = await Promise.all([
-        fetch("/api/events/complaints"),
-        fetch("/api/events/blotters"),
+        fetch(`/api/events/complaints`),
+        fetch(`/api/events/blotters`),
       ]);
 
       if (!complaintRes.ok) throw new Error("Failed to fetch complaint events");
@@ -25,32 +51,29 @@ const LiveActivityFeed = () => {
       const complaintJson = await complaintRes.json();
       const blotterJson = await blotterRes.json();
 
-      console.log("Complaint Res:", complaintJson);
-      console.log("Blotter Res:", blotterJson);
+      const complaintEvents = (complaintJson?.data ?? []).map((e) => ({
+        id: e.id,
+        trackingId: e.complaint?.trackingId ?? "N/A",
+        action: e.action,
+        adminName:
+          e.admin?.name ??
+          `${e.complaint?.complainant?.firstName ?? "Unknown"} ${e.complaint?.complainant?.lastName ?? ""}`.trim(),
+        timestamp: new Date(e.createdAt),
+      }));
 
-      const { data: complaintEvents = [] } = complaintJson;
-      const { data: blotterEvents = [] } = blotterJson;
+      const blotterEvents = (blotterJson?.data ?? []).map((e) => ({
+        id: e.id,
+        trackingId: e.blotter?.trackingId ?? "N/A",
+        action: e.action,
+        adminName: e.admin?.name ?? "Unknown Admin",
+        timestamp: new Date(e.createdAt),
+      }));
 
-      const normalized = [
-        ...complaintEvents.map((e) => ({
-          id: e.id,
-          trackingId: e.complaint?.trackingId ?? "N/A",
-          action: e.action,
-          adminName:
-            e.admin?.name ??
-            `${e.complaint?.complainant?.firstName ?? "Unknown"} ${e.complaint?.complainant?.lastName ?? ""}`.trim(),
-          timestamp: new Date(e.createdAt),
-        })),
-        ...blotterEvents.map((e) => ({
-          id: e.id,
-          trackingId: e.blotter?.trackingId ?? "N/A",
-          action: e.action,
-          adminName: e.admin?.name ?? "Unknown Admin",
-          timestamp: new Date(e.createdAt),
-        })),
-      ];
+      const normalized = [...complaintEvents, ...blotterEvents];
 
-      const sorted = normalized.sort((a, b) => b.timestamp - a.timestamp);
+      const sorted = normalized
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, limit);
 
       setEvents(sorted);
     } catch (err) {
@@ -63,26 +86,22 @@ const LiveActivityFeed = () => {
 
   useEffect(() => {
     fetchEvents();
+  }, [limit]);
 
-    const handler = () => fetchEvents();
-    emitter.addEventListener("activityFeedUpdated", handler);
+  const socket = useSocket();
+  useEffect(() => {
+    if (!socket) return;
 
-    return () => {
-      emitter.removeEventListener("activityFeedUpdated", handler);
+    const handleStatusUpdate = () => {
+      console.log("🔄 Complaint status updated - refetching...");
+      fetchEvents();
     };
-  }, []);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <CircularProgress />
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="text-red-500 text-sm text-center py-4">{error}</div>;
-  }
+    socket.on("complaint-updated", handleStatusUpdate);
+    return () => {
+      socket.off("complaint-updated", handleStatusUpdate);
+    };
+  }, [socket, limit]);
 
   const formatTimestamp = (val) => {
     const date = new Date(val || new Date());
@@ -97,31 +116,51 @@ const LiveActivityFeed = () => {
     })}`;
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <CircularProgress />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-sm text-center py-4">{error}</div>;
+  }
+
   return (
-    <>
-      <h3 className="flex flex-col text-sm text-text font-semibold">
+    <div ref={containerRef} className="flex flex-col h-full">
+      <h3 className="text-sm text-text font-semibold mb-4 flex-shrink-0">
         Live Activity Feed
       </h3>
-      <div className="space-y-3">
+      <div className="flex flex-col gap-2 flex-1 min-h-0">
         {events.map((event) => (
           <div
             key={event.id}
-            className="text-sm bg-gray-100 px-4 py-2 rounded-md border border-gray-200"
+            className="text-sm bg-gray-100 px-4 py-2 rounded-md border border-gray-200 flex flex-col"
           >
-            <span className="flex flex-row gap-1">
-              <span className="font-medium">{event.adminName}</span>
-              {event.action.toLowerCase()}
-              <span className="italic text-gray-600">
-                {event.type} #{event.trackingId}
+            <div className="flex flex-row items-center gap-2 flex-1">
+              <span
+                className="font-medium min-w-0 flex-1 truncate text-right"
+                title={event.adminName}
+              >
+                {event.adminName}
               </span>
-            </span>
+              <span>{event.action.toLowerCase()}</span>
+              <span
+                className="italic text-gray-600"
+                title={`#${event.trackingId}`}
+              >
+                #{event.trackingId}
+              </span>
+            </div>
             <div className="text-xs text-gray-500 w-full text-right">
               {formatTimestamp(event.timestamp)}
             </div>
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
 };
 
