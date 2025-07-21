@@ -1,7 +1,6 @@
 "use client";
 
 import { useSocket } from "@/context";
-import { emitter } from "@/lib";
 import { CircularProgress } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 
@@ -92,14 +91,28 @@ const LiveActivityFeed = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleStatusUpdate = () => {
-      console.log("🔄 Complaint status updated - refetching...");
+    const handleNewComplaint = () => {
+      console.log("Complaint created - live activity refresh...");
       fetchEvents();
     };
 
+    const handleStatusUpdate = () => {
+      console.log("🔄 Complaint status updated - live activity refresh...");
+      fetchEvents();
+    };
+
+    const handleNewBlotter = () => {
+      console.log("📄 Blotter created - live activity refresh...");
+      fetchEvents();
+    };
+
+    socket.on("complaint-created", handleNewComplaint);
     socket.on("complaint-updated", handleStatusUpdate);
+    socket.on("blotter-created", handleNewBlotter);
     return () => {
+      socket.on("complaint-created", handleNewComplaint);
       socket.off("complaint-updated", handleStatusUpdate);
+      socket.off("blotter-created", handleNewBlotter);
     };
   }, [socket, limit]);
 

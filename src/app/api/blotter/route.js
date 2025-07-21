@@ -14,7 +14,6 @@ export async function GET(request) {
 
     const where = status ? { status } : {};
 
-    // Fetch paginated blotters and total count
     const [blotters, totalCount] = await Promise.all([
       prisma.blotter.findMany({
         where,
@@ -36,24 +35,13 @@ export async function GET(request) {
               attachmentUtility: true,
             },
           },
-          attachments: {
-            select: {
-              id: true,
-              file: true,
-            },
-          },
-          fromComplaint: {
-            select: {
-              trackingId: true,
-              status: true,
-            },
-          },
+          attachments: { select: { id: true, file: true } },
+          fromComplaint: { select: { trackingId: true, status: true } },
         },
       }),
       prisma.blotter.count({ where }),
     ]);
 
-    // Decrypt attachments and complainant files
     const enriched = await Promise.all(
       blotters.map(async (blotter) => {
         const decryptedAttachments = await Promise.all(
