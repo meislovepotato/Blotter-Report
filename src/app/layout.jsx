@@ -15,6 +15,9 @@ export async function generateMetadata() {
       default: `Barangay ${barangayName}`,
     },
     description: `Official Complaint Reporting Page of Barangay ${barangayName}`,
+    icons: {
+      icon: "/favicon.ico",
+    },
   };
 }
 
