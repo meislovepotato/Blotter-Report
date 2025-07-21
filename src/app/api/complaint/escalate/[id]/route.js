@@ -10,13 +10,9 @@ export async function PATCH(req, context) {
     const { id } = params;
     const { status } = await req.json();
 
-    if (!status) {
-      return NextResponse.json({ error: "Missing status" }, { status: 400 });
-    }
-
-    if (!Object.values(ComplaintStatus).includes(status)) {
+    if (status !== "ESCALATED") {
       return NextResponse.json(
-        { error: "Invalid complaint status" },
+        { error: "Status not Escalated" },
         { status: 400 }
       );
     }
@@ -44,11 +40,28 @@ export async function PATCH(req, context) {
       );
     }
 
+    const blotter = await prisma.blotter.create({
+      data: {
+        trackingId: `BLTR-${Date.now()}`,
+        description: complaint.description,
+        category: complaint.category,
+        incidentDateTime: complaint.incidentDateTime,
+        location: complaint.location,
+        subjectName: complaint.subjectName,
+        subjectContext: complaint.subjectContext,
+        complainantId: complaint.complainantId,
+        fromComplaint: { connect: { id: complaint.id } },
+        updatedByAdminId: adminId,
+      },
+    });
+
     const updatedComplaint = await prisma.complaint.update({
       where: { id },
       data: {
-        status,
+        status: ComplaintStatus.ESCALATED,
+        escalatedAt: new Date(),
         reviewedByAdmin: { connect: { id: adminId } },
+        blotter: { connect: { id: blotter.id } },
         updatedAt: new Date(),
       },
     });
@@ -63,24 +76,40 @@ export async function PATCH(req, context) {
       },
     });
 
+    await prisma.blotterEvent.create({
+      data: {
+        blotterId: blotter.id,
+        action: "filed blotter",
+        adminId: adminId,
+      },
+    });
+
     const socket = createSocketClient();
     if (socket) {
       socket.emit("complaint-updated", {
-        id,
-        status,
+        id: complaint.id,
+        status: ComplaintStatus.ESCALATED,
       });
       console.log("✅ complaint-updated event emitted");
+
+      socket.emit("blotter-created", {
+        id: blotter.id,
+        trackingId: blotter.trackingId,
+        category: blotter.category,
+        createdAt: blotter.createdAt,
+      });
+      console.log("📢 blotter-created event emitted");
     }
 
     return NextResponse.json({
       success: true,
       updatedComplaint,
-      message: "Status updated successfully",
+      message: "Complaint escalated to blotter successfully",
     });
-  } catch (err) {
-    console.error("Status update error:", err);
+  } catch (error) {
+    console.error("💥 Escalation error:", error);
     return NextResponse.json(
-      { error: "Something went wrong", message: err.message },
+      { error: "Something went wrong", message: error.message },
       { status: 500 }
     );
   } finally {

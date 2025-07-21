@@ -17,10 +17,17 @@ io.on("connection", (socket) => {
 
     socket.broadcast.emit("complaint-created", data);
   });
+
   socket.on("complaint-updated", (data) => {
     console.log("📩 Received complaint-updated:", data);
 
     io.emit("complaint-updated", data);
+  });
+
+  socket.on("blotter-created", (data) => {
+    console.log("📩 Received blotter-created:", data);
+
+    io.emit("blotter-created", data);
   });
 
   socket.on("disconnect", () => {
