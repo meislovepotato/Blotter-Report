@@ -227,60 +227,70 @@ const ReportDetailModal = ({
         <div className="flex justify-between gap-2">
           <SecondaryButton onClick={onClose}>Close</SecondaryButton>
 
-          {!isBlotter && currentStatus === "PENDING" && (
+          {!isBlotter && (
             <div className="flex gap-2">
-              <PrimaryButton
-                onClick={() => onAction("REJECT", id)}
-                className="!bg-red-400"
-              >
-                Reject
-              </PrimaryButton>
-              <PrimaryButton onClick={() => onAction("IN_PROGRESS", id)}>
-                Mark as In Progress
-              </PrimaryButton>
-            </div>
-          )}
-
-          {!isBlotter && currentStatus === "IN_PROGRESS" && (
-            <div className="flex gap-2">
-              <PrimaryButton
-                onClick={() => onAction("REJECTED", id)}
-                className="!bg-red-400"
-              >
-                Reject
-              </PrimaryButton>
-              <PrimaryButton onClick={() => onAction("RESOLVED", id)}>
-                Mark as Resolved
-              </PrimaryButton>
-
-              {adminRole === "STAFF" && (
-                <PrimaryButton
-                  onClick={() => onAction("ESCALATION_REQUESTED", id)}
-                >
-                  Request Escalation
-                </PrimaryButton>
+              {currentStatus === "PENDING" && (
+                <>
+                  <PrimaryButton
+                    onClick={() => onAction("REJECT", id)}
+                    className="!bg-red-400"
+                  >
+                    Reject
+                  </PrimaryButton>
+                  <PrimaryButton onClick={() => onAction("IN_PROGRESS", id)}>
+                    Mark as In Progress
+                  </PrimaryButton>
+                </>
               )}
 
-              {adminRole === "ADMIN" && (
-                <PrimaryButton
-                  className="!bg-indigo-400"
-                  onClick={() => onAction("ESCALATED", id)}
-                >
-                  Escalate to Blotter
-                </PrimaryButton>
+              {currentStatus === "IN_PROGRESS" && (
+                <>
+                  <PrimaryButton
+                    onClick={() => onAction("REJECTED", id)}
+                    className="!bg-red-400"
+                  >
+                    Reject
+                  </PrimaryButton>
+                  <PrimaryButton onClick={() => onAction("RESOLVED", id)}>
+                    Mark as Resolved
+                  </PrimaryButton>
+
+                  {adminRole === "STAFF" && (
+                    <PrimaryButton
+                      onClick={() => onAction("ESCALATION_REQUESTED", id)}
+                    >
+                      Request Escalation
+                    </PrimaryButton>
+                  )}
+
+                  {adminRole === "ADMIN" && (
+                    <PrimaryButton
+                      className="!bg-indigo-400"
+                      onClick={() => onAction("ESCALATED", id)}
+                    >
+                      Escalate to Blotter
+                    </PrimaryButton>
+                  )}
+                </>
               )}
-            </div>
-          )}
-          {!isBlotter && currentStatus === "ESCALATION_REQUESTED" && (
-            <div className="flex gap-2">
-              {adminRole === "ADMIN" && (
-                <PrimaryButton
-                  className="!bg-indigo-400"
-                  onClick={() => onAction("ESCALATED", id)}
-                >
-                  Escalate to Blotter
-                </PrimaryButton>
-              )}
+
+              {currentStatus === "ESCALATION_REQUESTED" &&
+                adminRole === "ADMIN" && (
+                  <>
+                    <PrimaryButton
+                      className="!bg-red-400"
+                      onClick={() => onAction("IN_PROGRESS", id)}
+                    >
+                      Reject Escalation
+                    </PrimaryButton>
+                    <PrimaryButton
+                      className="!bg-indigo-400"
+                      onClick={() => onAction("ESCALATED", id)}
+                    >
+                      Escalate to Blotter
+                    </PrimaryButton>
+                  </>
+                )}
             </div>
           )}
         </div>

@@ -12,6 +12,7 @@ import {
   STATUS_STYLES,
 } from "@/constants";
 import { Alert, Snackbar } from "@mui/material";
+import { useSocket } from "@/context";
 
 const getDeterministicAvatarColor = (id, colorsArray) => {
   if (!id || (typeof id !== "string" && typeof id !== "number")) {
@@ -104,17 +105,25 @@ const BlotterOverview = ({
   useEffect(() => {
     if (!isCompact && limit > 0) {
       fetchBlotters(true, 1, limit); // load page 1
-      setPagination((prev) => ({ ...prev, page: 1 }));
     } else if (isCompact) {
       fetchBlotters(true);
     }
   }, [limit, isCompact]);
 
+  const socket = useSocket();
   useEffect(() => {
-    if (!isCompact && limit > 0) {
+    if (!socket) return;
+
+    const handleNewBlotter = () => {
+      console.log("Complaint created - refetching...");
       fetchBlotters(true, pagination.page, limit);
-    }
-  }, [pagination.page]);
+    };
+
+    socket.on("blotter-created", handleNewBlotter);
+    return () => {
+      socket.off("blotter-created", handleNewBlotter);
+    };
+  }, [socket, pagination.page, limit]);
 
   const from = filters.dateFrom ? new Date(filters.dateFrom) : null;
   const to = filters.dateTo ? new Date(filters.dateTo) : null;

@@ -67,10 +67,11 @@ const ComplaintsOverview = ({
     try {
       const endpoint =
         actionType === "ESCALATED"
-          ? "/api/complaint/escalate"
+          ? `/api/complaint/escalate/${complaintId}`
           : `/api/complaint/update-status/${complaintId}`;
 
       const payload = { status: actionType };
+      console.log("Complaint ID:", complaintId);
 
       const res = await fetch(endpoint, {
         method: "PATCH",
