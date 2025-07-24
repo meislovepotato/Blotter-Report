@@ -10,6 +10,7 @@ import {
 } from "@/constants";
 import { PrimaryButton, SecondaryButton } from "../userInterface";
 import { Dialog, DialogContent, IconButton } from "@mui/material";
+import { calculateSeverity } from "@/lib";
 
 const ReportDetailModal = ({
   type = "complaint",
@@ -78,6 +79,19 @@ const ReportDetailModal = ({
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
+
+  const { score, label, matchedKeywords } = calculateSeverity(
+    category,
+    description || ""
+  );
+  const hasKeywordMatches = Object.values(matchedKeywords).some(
+    (arr) => arr.length > 0
+  );
+
+  const totalMatched = Object.values(matchedKeywords).reduce(
+    (acc, curr) => acc + curr.length,
+    0
+  );
 
   return (
     <Dialog open={true} onClose={onClose} maxWidth="md" fullWidth>
@@ -171,6 +185,19 @@ const ReportDetailModal = ({
               {BLOTTER_CATEGORIES[category] || category || "N/A"}
             </span>
           </h3>
+          {hasKeywordMatches && (
+            <div className="text-sm text-red-600 border border-red-200 bg-red-50 p-3 rounded-md mb-4">
+              This content has been flagged as <strong>{label}</strong> with a
+              score of {score} in the{" "}
+              <strong>{BLOTTER_CATEGORIES[category]}</strong> category because
+              it contains {totalMatched === 1 ? "the keyword" : "keywords"}{" "}
+              {Object.entries(matchedKeywords)
+                .filter(([, words]) => words.length)
+                .map(([group, words]) => `${words.join(", ")} (${group})`)
+                .join(", ")}
+              .
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             {description && (
               <div className="mt-2">
@@ -199,7 +226,6 @@ const ReportDetailModal = ({
                 : "N/A"}
             </p>
           </div>
-
           {/* Incident Evidence */}
           {imageUrls.evidence.length > 0 && (
             <>
