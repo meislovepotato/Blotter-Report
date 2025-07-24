@@ -3,3 +3,4 @@ export * from "./complaint";
 export * from "./auth";
 export * from "./admin";
 export * from "./severity";
+export * from "./severityKeywords";
