@@ -1,31 +1,6 @@
 "use client";
-import { SeverityLevel } from "@/constants";
 import { useState, useEffect, useRef } from "react";
-
-const severityColorMap = {
-  [SeverityLevel.EMERGENCY]: "bg-[#fdf3f3]", // near-white with a red tint
-  [SeverityLevel.URGENT]: "bg-[#fff8f0]", // ultra-light orange-beige
-  [SeverityLevel.MODERATE]: "bg-[#fffcf2]", // pale yellow-cream
-  [SeverityLevel.MINOR]: "bg-[#f6fdf8]", // hint of green
-  [SeverityLevel.INFORMATIONAL]: "bg-[#fafafa]", // plain soft gray-white
-};
-
-const severityHoverMap = {
-  [SeverityLevel.EMERGENCY]: "hover:bg-[#faeaea]", // still calm
-  [SeverityLevel.URGENT]: "hover:bg-[#fff2e2]", // warm but quiet
-  [SeverityLevel.MODERATE]: "hover:bg-[#fff9d5]", // soft butter yellow
-  [SeverityLevel.MINOR]: "hover:bg-[#eafbef]", // minty but faint
-  [SeverityLevel.INFORMATIONAL]: "hover:bg-[#f0f0f0]", // light gray hover
-};
-
-const SEVERITY_ORDER = {
-  [SeverityLevel.EMERGENCY]: 5,
-  [SeverityLevel.URGENT]: 4,
-  [SeverityLevel.MODERATE]: 3,
-  [SeverityLevel.MINOR]: 2,
-  [SeverityLevel.INFORMATIONAL]: 1,
-  null: 0,
-};
+import { SEVERITY_COLOR_MAP, SEVERITY_HOVER_MAP } from "@/constants";
 
 const DataTable = ({
   data = [],
@@ -46,8 +21,8 @@ const DataTable = ({
   const safeData = Array.isArray(data) ? data : [];
 
   const sortedData = [...safeData].sort((a, b) => {
-    const aSeverity = SEVERITY_ORDER[a.severity] ?? 0;
-    const bSeverity = SEVERITY_ORDER[b.severity] ?? 0;
+    const aSeverity = a.severity ?? 0;
+    const bSeverity = b.severity ?? 0;
 
     if (aSeverity !== bSeverity) {
       return bSeverity - aSeverity;
@@ -98,12 +73,12 @@ const DataTable = ({
 
   const getSeverityClass = (row) => {
     if (row.status === "ESCALATED") return "bg-gray-100";
-    return severityColorMap[row.severity] || "";
+    return SEVERITY_COLOR_MAP[row.severity] || "";
   };
 
   const getHoverClass = (row) => {
     if (row.status === "ESCALATED") return "hover:bg-gray-200";
-    return severityHoverMap[row.severity] || "hover:bg-secondary/10";
+    return SEVERITY_HOVER_MAP[row.severity] || "hover:bg-secondary/10";
   };
 
   const getTextClass = (row) => {
