@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib";
+import { ensurePrismaConnected, prisma } from "@/lib";
 
 export async function GET() {
   try {
+    await ensurePrismaConnected;
+
     const pendingAdmins = await prisma.pendingAdmin.findMany({
       orderBy: { createdAt: "desc" }, // optional, to show most recent first
     });

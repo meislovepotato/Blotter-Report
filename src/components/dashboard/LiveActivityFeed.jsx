@@ -10,6 +10,11 @@ const LiveActivityFeed = () => {
   const [limit, setLimit] = useState(3);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => setHasMounted(true), 100);
+    return () => clearTimeout(timeout);
+  }, []);
 
   const calculateLimit = () => {
     if (containerRef.current) {
@@ -128,6 +133,8 @@ const LiveActivityFeed = () => {
       hour12: true,
     })}`;
   };
+
+  if (!hasMounted) return null;
 
   if (loading) {
     return (

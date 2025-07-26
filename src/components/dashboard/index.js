@@ -6,3 +6,5 @@ export { default as PendingAdmins } from "./PendingAdmins";
 export { default as ReportDetailModal } from "./ReportDetailModal";
 
 export { default as LiveActivityFeed } from "./LiveActivityFeed";
+
+export { default as StatCard } from "./StatCard";

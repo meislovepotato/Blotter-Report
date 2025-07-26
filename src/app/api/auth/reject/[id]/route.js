@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib";
+import { ensurePrismaConnected, prisma } from "@/lib";
 import { sendEmail } from "@/lib/server/sendEmail";
 
 export async function DELETE(req, { params }) {
   const { id } = params;
 
   try {
+    await ensurePrismaConnected();
+
     const pending = await prisma.pendingAdmin.findUnique({ where: { id } });
 
     if (!pending) {

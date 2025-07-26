@@ -53,7 +53,7 @@ export async function encryptBuffer(buffer) {
     combined.set(iv, 0);
     combined.set(new Uint8Array(encrypted), IV_LENGTH);
 
-    return Buffer.from(combined); // ✅ Compatible with Prisma/blob store
+    return Buffer.from(combined);
   } catch (err) {
     console.error("Buffer encryption error:", err);
     throw err;
