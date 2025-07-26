@@ -29,7 +29,6 @@ export async function POST(req) {
       );
     }
 
-    // Add await here!
     const token = await createToken({
       id: admin.id,
       name: admin.name,

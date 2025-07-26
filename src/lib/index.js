@@ -1,4 +1,4 @@
-export { default as prisma } from "./prisma";
+export { prisma, ensurePrismaConnected } from "./prisma";
 
 export * from "./hash";
 export * from "./auth";

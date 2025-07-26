@@ -1,4 +1,4 @@
-import prisma from "./prisma";
+import { ensurePrismaConnected, prisma } from "./prisma";
 
 export async function fetchBarangayInfo() {
   try {
@@ -18,6 +18,8 @@ export async function fetchBarangayInfo() {
 
 export async function getBarangayInfoServer() {
   try {
+    await ensurePrismaConnected();
+
     const barangay = await prisma.barangay.findFirst();
     const chairperson = await prisma.admin.findFirst({
       where: { hierarchyRole: "CAPTAIN" },
