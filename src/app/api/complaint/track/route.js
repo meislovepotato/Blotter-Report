@@ -123,27 +123,3 @@ export async function POST(req) {
     await prisma.$disconnect();
   }
 }
-
-// <div className="flex-1">
-//   <h3 className="font-semibold mb-2">Complaint Details</h3>
-//   <div>
-//     <strong>Status:</strong> {complaint.status}
-//   </div>
-//   <div>
-//     <strong>Description:</strong> {complaint.description}
-//   </div>
-//   <div>
-//     <strong>Category:</strong> {complaint.category}
-//   </div>
-//   <div>
-//     <strong>Date Filed:</strong>{" "}
-//     {new Date(complaint.createdAt).toLocaleString()}
-//   </div>
-//   <div>
-//     <strong>Complainant:</strong>{" "}
-//     {`${complaint.complainant.lastName}, ${complaint.complainant.firstName} ${complaint.complainant.middleName || ""}`}
-//   </div>
-//   <div>
-//     <strong>Address:</strong> {complaint.complainant.fullAddress}
-//   </div>
-// </div>

@@ -1,8 +1,10 @@
-import { prisma } from "@/lib";
+import { prisma, ensurePrismaConnected } from "@/lib";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
+    await ensurePrismaConnected();
+
     const data = await prisma.complaintEvent.findMany({
       include: {
         admin: {

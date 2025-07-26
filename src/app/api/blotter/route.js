@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { decryptBuffer, bufferToBase64DataUrl } from "@/lib/complaint";
-import { prisma } from "@/lib";
+import { ensurePrismaConnected, prisma } from "@/lib";
 
 export async function GET(request) {
   try {
+    await ensurePrismaConnected();
+
     const { searchParams } = new URL(request.url);
     const page = Math.max(parseInt(searchParams.get("page") || "1"), 1);
     const limit = Math.min(
