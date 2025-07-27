@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
   allowedDevOrigins: ["***REDACTED_IP***", "*.***REDACTED_IP***"],
 };
 

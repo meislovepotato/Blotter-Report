@@ -59,6 +59,45 @@ const BlotterOverview = ({
     setSnackbar({ open: true, message, severity });
   };
 
+  const handleAction = async (actionType, blotterId) => {
+    try {
+      const endpoint = `/api/blotter/update-status/${blotterId}`;
+      const payload = { status: actionType };
+
+      console.log("Blotter ID:", blotterId);
+
+      const res = await fetch(endpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || "Update failed");
+      }
+
+      const statusMessages = {
+        FILED: "Blotter filed successfully",
+        UNDER_MEDIATION: "Blotter marked as under mediation",
+        RESOLVED: "Blotter resolved successfully",
+        REFERRED: "Blotter referred successfully",
+      };
+
+      const message =
+        statusMessages[actionType] || "Blotter status updated successfully";
+
+      showSnackbar(message);
+      setSelectedBlotter(null);
+      fetchBlotters(false, pagination.page, limit);
+    } catch (err) {
+      console.error("Update failed:", err);
+      showSnackbar(`Update failed: ${err.message}`, "error");
+    }
+  };
+
   const fetchBlotters = async (
     showLoading = false,
     page = 1,
@@ -115,13 +154,19 @@ const BlotterOverview = ({
     if (!socket) return;
 
     const handleNewBlotter = () => {
-      console.log("Complaint created - refetching...");
+      console.log("Blotter created - refetching...");
+      fetchBlotters(true, pagination.page, limit);
+    };
+    const handleStatusUpdate = () => {
+      console.log("Blotter updated - refetching...");
       fetchBlotters(true, pagination.page, limit);
     };
 
     socket.on("blotter-created", handleNewBlotter);
+    socket.on("blotter-updated", handleStatusUpdate);
     return () => {
       socket.off("blotter-created", handleNewBlotter);
+      socket.off("blotter-updated", handleStatusUpdate);
     };
   }, [socket, pagination.page, limit]);
 
@@ -304,12 +349,14 @@ const BlotterOverview = ({
           data={selectedBlotter}
           adminRole={dashboardRole}
           onClose={() => setSelectedBlotter(null)}
+          onAction={handleAction}
         />
       )}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}

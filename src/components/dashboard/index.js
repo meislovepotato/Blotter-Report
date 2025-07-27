@@ -7,4 +7,5 @@ export { default as ReportDetailModal } from "./ReportDetailModal";
 
 export { default as LiveActivityFeed } from "./LiveActivityFeed";
 
-export { default as StatCard } from "./StatCard";
+export { default as DashboardStats } from "./DashboardStats";
+export { default as WeeklyStatsChart } from "./WeeklyStatsChart";
