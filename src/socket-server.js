@@ -30,6 +30,12 @@ io.on("connection", (socket) => {
     io.emit("blotter-created", data);
   });
 
+  socket.on("blotter-updated", (data) => {
+    console.log("📩 Received blotter-updated:", data);
+
+    io.emit("blotter-updated", data);
+  });
+
   socket.on("disconnect", () => {
     console.log("❌ Client disconnected:", socket.id);
   });

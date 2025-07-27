@@ -185,19 +185,33 @@ const ReportDetailModal = ({
               {BLOTTER_CATEGORIES[category] || category || "N/A"}
             </span>
           </h3>
-          {hasKeywordMatches && (
-            <div className="text-sm text-red-600 border border-red-200 bg-red-50 p-3 rounded-md mb-4">
-              This content has been flagged as <strong>{label}</strong> with a
-              score of {score} in the{" "}
-              <strong>{BLOTTER_CATEGORIES[category]}</strong> category because
-              it contains {totalMatched === 1 ? "the keyword" : "keywords"}{" "}
-              {Object.entries(matchedKeywords)
-                .filter(([, words]) => words.length)
-                .map(([group, words]) => `${words.join(", ")} (${group})`)
-                .join(", ")}
-              .
-            </div>
-          )}
+          <div
+            className={`text-sm border p-3 rounded-md mb-4 ${
+              score >= 4
+                ? "text-red-600 border-red-200 bg-red-50"
+                : score >= 2
+                  ? "text-yellow-700 border-yellow-200 bg-yellow-50"
+                  : "text-gray-600 border-gray-200 bg-gray-50"
+            }`}
+          >
+            This content has been flagged as <strong>{label}</strong> with a
+            score of {score} in the{" "}
+            <strong>{BLOTTER_CATEGORIES[category]}</strong> category.
+            {hasKeywordMatches && totalMatched > 0 && (
+              <>
+                {" "}
+                It contains {totalMatched === 1
+                  ? "the keyword"
+                  : "keywords"}{" "}
+                {Object.entries(matchedKeywords)
+                  .filter(([, words]) => words.length)
+                  .map(([group, words]) => `${words.join(", ")} (${group})`)
+                  .join(", ")}
+                .
+              </>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             {description && (
               <div className="mt-2">
@@ -252,6 +266,43 @@ const ReportDetailModal = ({
         {/* Action Buttons */}
         <div className="flex justify-between gap-2">
           <SecondaryButton onClick={onClose}>Close</SecondaryButton>
+
+          {isBlotter && (
+            <div className="flex gap-2">
+              {currentStatus === "FILED" && (
+                <>
+                  <PrimaryButton
+                    onClick={() => onAction("UNDER_MEDIATION", id)}
+                  >
+                    Mark as Under Mediation
+                  </PrimaryButton>
+                  <PrimaryButton
+                    onClick={() => onAction("REFERRED", id)}
+                    className="!bg-indigo-400"
+                  >
+                    Refer to Higher Authorities
+                  </PrimaryButton>
+                </>
+              )}
+
+              {currentStatus === "UNDER_MEDIATION" && (
+                <>
+                  <PrimaryButton
+                    onClick={() => onAction("RESOLVED", id)}
+                    className="!bg-green-500"
+                  >
+                    Mark as Resolved
+                  </PrimaryButton>
+                  <PrimaryButton
+                    onClick={() => onAction("REFERRED", id)}
+                    className="!bg-indigo-400"
+                  >
+                    Refer to Higher Authorities
+                  </PrimaryButton>
+                </>
+              )}
+            </div>
+          )}
 
           {!isBlotter && (
             <div className="flex gap-2">
