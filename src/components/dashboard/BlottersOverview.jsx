@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { VisibilityRounded } from "@mui/icons-material";
-import { DataTable, FilterBar, ReportDetailModal } from "@/components";
+import {
+  DataTable,
+  FeedbackSnackbar,
+  FilterBar,
+  ReportDetailModal,
+} from "@/components";
 import {
   AVATAR_COLORS,
   BLOTTER_CATEGORIES,
@@ -11,7 +16,6 @@ import {
   DEFAULT_FALLBACK_COLOR,
   STATUS_STYLES,
 } from "@/constants";
-import { Alert, Snackbar } from "@mui/material";
 import { useSocket } from "@/context";
 
 const getDeterministicAvatarColor = (id, colorsArray) => {
@@ -352,20 +356,12 @@ const BlotterOverview = ({
           onAction={handleAction}
         />
       )}
-      <Snackbar
+      <FeedbackSnackbar
         open={snackbar.open}
-        autoHideDuration={4000}
+        message={snackbar.message}
+        severity={snackbar.severity}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      />
     </div>
   );
 };

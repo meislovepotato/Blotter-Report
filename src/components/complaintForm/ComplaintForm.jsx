@@ -10,10 +10,10 @@ import {
   Review,
 } from "@/components/complaintForm";
 import { useState } from "react";
-import { Snackbar, Alert } from "@mui/material";
 import { INITIAL_FORM_DATA } from "@/constants";
 import { fileToBase64, stepSchemas } from "@/lib";
 import { useSocket } from "@/context";
+import { FeedbackSnackbar } from "../userInterface";
 
 const steps = [
   "Personal Info",
@@ -145,20 +145,12 @@ const ComplaintForm = () => {
         />
       </form>
 
-      <Snackbar
+      <FeedbackSnackbar
         open={snackbar.open}
-        autoHideDuration={4000}
+        message={snackbar.message}
+        severity={snackbar.severity}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { SEVERITY_COLOR_MAP, SEVERITY_HOVER_MAP } from "@/constants";
+import { CircularProgress } from "@mui/material";
 
 const DataTable = ({
   data = [],
@@ -121,7 +122,7 @@ const DataTable = ({
       <div className="overflow-auto h-full">
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-transparent"></div>
+            <CircularProgress />
           </div>
         ) : (
           <table className="w-full text-sm">

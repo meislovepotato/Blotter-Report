@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { DataTable, FilterBar, ReportDetailModal } from "@/components";
+import {
+  DataTable,
+  FeedbackSnackbar,
+  FilterBar,
+  ReportDetailModal,
+} from "@/components";
 import {
   AVATAR_COLORS,
   BLOTTER_CATEGORIES,
@@ -10,7 +15,6 @@ import {
 } from "@/constants";
 import { useRouter } from "next/navigation";
 import { VisibilityRounded } from "@mui/icons-material";
-import { Alert, Snackbar } from "@mui/material";
 import { useSocket } from "@/context";
 
 const getDeterministicAvatarColor = (id, colorsArray) => {
@@ -30,7 +34,8 @@ const getDeterministicAvatarColor = (id, colorsArray) => {
 };
 
 const classifySeverity = (complaint) => {
-  if (complaint.status === "ESCALATED") return null;
+  if (complaint.status === "ESCALATED" || complaint.status === "RESOLVED")
+    return null;
   return complaint.severity || null;
 };
 
@@ -263,7 +268,7 @@ const ComplaintsOverview = ({
             </div>
             <div>
               <div className="text-xs font-medium text-text">
-                {`${lastName}, ${firstName} ${middleName}`.trim()}
+                {`${lastName}, ${firstName} ${middleName || ""}`.trim()}
               </div>
               {phoneNumber && (
                 <div className="text-[0.625rem] text-text opacity-50">
@@ -381,20 +386,12 @@ const ComplaintsOverview = ({
           onAction={handleAction}
         />
       )}
-      <Snackbar
+      <FeedbackSnackbar
         open={snackbar.open}
-        autoHideDuration={4000}
+        message={snackbar.message}
+        severity={snackbar.severity}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      />
     </div>
   );
 };

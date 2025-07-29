@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useEffect, useState } from "react";
+import { CircularProgress } from "@mui/material";
 
 const WeeklyStatsChart = () => {
   const [data, setData] = useState([]);
@@ -44,21 +45,19 @@ const WeeklyStatsChart = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full w-full gap-6 select-none p-6 bg-gradient-to-br from-slate-50 to-gray-100/50 rounded-2xl border border-gray-200/30 shadow-sm">
-        <div className="flex items-center justify-center h-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-          <span className="ml-3 text-gray-600">Loading weekly stats...</span>
-        </div>
+      <div className="flex items-center justify-center h-full">
+        <CircularProgress />
+        <span className="ml-3 text-text font-medium">
+          Loading weekly stats...
+        </span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col h-full w-full gap-6 select-none p-6 bg-gradient-to-br from-slate-50 to-gray-100/50 rounded-2xl border border-gray-200/30 shadow-sm">
-        <div className="flex items-center justify-center h-full text-red-600">
-          <span>Error loading data: {error}</span>
-        </div>
+      <div className="flex items-center justify-center h-full text-red-600">
+        <span>Error loading data: {error}</span>
       </div>
     );
   }

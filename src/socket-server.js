@@ -36,6 +36,12 @@ io.on("connection", (socket) => {
     io.emit("blotter-updated", data);
   });
 
+  socket.on("admin-updated", (data) => {
+    console.log("📩 Received admin-updated:", data);
+
+    io.emit("admin-updated", data);
+  });
+
   socket.on("disconnect", () => {
     console.log("❌ Client disconnected:", socket.id);
   });
