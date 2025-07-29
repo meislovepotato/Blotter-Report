@@ -5,6 +5,7 @@ import theme from "@/styles/theme";
 import { getBarangayInfoServer } from "@/lib";
 import { SocketProvider } from "@/context";
 import { FakeSMSProvider } from "@/context/FakeSMSContext";
+import { FakeSMSProvider } from "@/context/FakeSMSContext";
 
 export async function generateMetadata() {
   const barangayInfo = await getBarangayInfoServer();
@@ -29,11 +30,12 @@ export default function RootLayout({ children }) {
         <SocketProvider>
           <FakeSMSProvider>
           <ThemeProvider theme={theme}>
-              <CssBaseline />
-              {children}
-              </ThemeProvider>
+                <CssBaseline />
+                {children}
+                  </ThemeProvider>
           </FakeSMSProvider>
         </SocketProvider>
+        
       </body>
     </html>
   );
