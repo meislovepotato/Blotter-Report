@@ -9,19 +9,14 @@ import {
   decryptBuffer,
   bufferToBase64DataUrl,
 } from "@/lib/complaint";
-
-const prisma = new PrismaClient();
+import { ensurePrismaConnected, prisma } from "@/lib";
 
 export async function POST(req) {
   try {
-    const data = await req.json();
+    await ensurePrismaConnected();
 
-    const {
-      attachmentIDFront,
-      attachmentIDBack,
-      attachmentUtility,
-      complaintAttachment = [],
-    } = data;
+    const data = await req.json();
+    const phoneNumber = data.phoneNumber;
 
     const missing = validateRequiredFields(data);
     if (missing) {
@@ -35,34 +30,22 @@ export async function POST(req) {
       );
     }
 
-    let encryptedIDFront = null;
-    let encryptedIDBack = null;
-    let encryptedUtility = null;
-
-    try {
-      if (data.proofType === "ID") {
-        if (attachmentIDFront) {
-          encryptedIDFront = await encryptBuffer(
-            base64ToBuffer(attachmentIDFront)
-          );
-        }
-        if (attachmentIDBack) {
-          encryptedIDBack = await encryptBuffer(
-            base64ToBuffer(attachmentIDBack)
-          );
-        }
-      } else if (data.proofType === "UTILITY_BILL") {
-        if (attachmentUtility) {
-          encryptedUtility = await encryptBuffer(
-            base64ToBuffer(attachmentUtility)
-          );
-        }
-      }
-    } catch (err) {
-      console.error("Encryption error:", err);
-      return NextResponse.json(
-        { success: false, error: "Failed to process attachments." },
-        { status: 400 }
+    // Encrypt based on proof type
+    let encryptedIDFront = null,
+      encryptedIDBack = null,
+      encryptedUtility = null;
+    if (data.proofType === "ID") {
+      if (data.attachmentIDFront)
+        encryptedIDFront = await encryptBuffer(
+          base64ToBuffer(data.attachmentIDFront)
+        );
+      if (data.attachmentIDBack)
+        encryptedIDBack = await encryptBuffer(
+          base64ToBuffer(data.attachmentIDBack)
+        );
+    } else if (data.proofType === "UTILITY_BILL" && data.attachmentUtility) {
+      encryptedUtility = await encryptBuffer(
+        base64ToBuffer(data.attachmentUtility)
       );
     }
 
@@ -77,8 +60,8 @@ export async function POST(req) {
     const complaint = await prisma.complaint.create({
       data: {
         trackingId,
-        complainantId, // ✅ just this
-        description: data.description || "", // <- change this if nullable
+        complainantId,
+        description: data.description || "",
         category: data.category,
         severity: data.severity || "INFORMATIONAL",
         incidentDateTime: new Date(data.incidentDateTime),
@@ -87,18 +70,27 @@ export async function POST(req) {
         subjectContext: data.subjectContext || null,
       },
     });
-  
-    for (const file of complaintAttachment) {
-      try {
-        const encrypted = await encryptBuffer(base64ToBuffer(file));
-        await prisma.complaintAttachment.create({
-          data: {
-            complaintId: complaint.id,
-            file: encrypted,
-          },
-        });
-      } catch (err) {
-        console.warn("Skipped invalid incident file:", err);
+
+    // Save activity log
+    await prisma.complaintEvent.create({
+      data: {
+        complaintId: complaint.id,
+        action: "created complaint",
+        adminId: null,
+      },
+    });
+
+    // Encrypt and save attachments
+    if (Array.isArray(data.complaintAttachment)) {
+      for (const file of data.complaintAttachment) {
+        try {
+          const encrypted = await encryptBuffer(base64ToBuffer(file));
+          await prisma.complaintAttachment.create({
+            data: { complaintId: complaint.id, file: encrypted },
+          });
+        } catch (err) {
+          console.warn("Skipped invalid file:", err);
+        }
       }
     }
 
@@ -117,111 +109,81 @@ export async function POST(req) {
       { success: false, error: "Something went wrong." },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
 export async function GET(request) {
   try {
+    await ensurePrismaConnected();
+
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const page = Math.max(parseInt(searchParams.get("page") || "1"), 1);
+    const limit = Math.min(
+      Math.max(parseInt(searchParams.get("limit") || "10"), 1),
+      100
+    ); // Max limit safety
     const status = searchParams.get("status");
 
-    const where = {};
-    if (status) where.status = status;
+    const where = status ? { status } : {};
 
-    const complaints = await prisma.complaint.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-      include: {
-        complainant: {
-          select: {
-            id: true,
-            firstName: true,
-            middleName: true,
-            lastName: true,
-            phoneNumber: true,
-            fullAddress: true,
-            residencyProof: true,
-            attachmentIDFront: true,
-            attachmentIDBack: true,
-            attachmentUtility: true,
+    const [complaints, totalCount] = await Promise.all([
+      prisma.complaint.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          complainant: {
+            select: {
+              id: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              phoneNumber: true,
+              fullAddress: true,
+              residencyProof: true,
+              attachmentIDFront: true,
+              attachmentIDBack: true,
+              attachmentUtility: true,
+            },
           },
+          attachments: { select: { id: true, file: true } },
         },
-        attachments: {
-          select: {
-            id: true,
-            file: true,
-          },
-        },
-      },
-    });
+      }),
+      prisma.complaint.count({ where }),
+    ]);
 
     const enriched = await Promise.all(
       complaints.map(async (complaint) => {
-        // Process complaint attachments
         const decryptedAttachments = await Promise.all(
-          complaint.attachments.map(async (attachment) => {
+          complaint.attachments.map(async (att) => {
             try {
-              const decryptedBuffer = await decryptBuffer(attachment.file);
-              const dataUrl = await bufferToBase64DataUrl(decryptedBuffer);
-              return {
-                id: attachment.id,
-                file: dataUrl,
-              };
-            } catch (error) {
-              console.warn("Failed to decrypt attachment:", error);
-              return {
-                id: attachment.id,
-                file: null,
-              };
+              const buf = await decryptBuffer(att.file);
+              return { id: att.id, file: await bufferToBase64DataUrl(buf) };
+            } catch {
+              return { id: att.id, file: null };
             }
           })
         );
 
         const c = complaint.complainant || {};
+        const enrichedComplainant = { ...c };
 
-        // Process complainant attachments
-        const enrichedComplainant = {
-          ...c,
-          attachmentIDFront: null,
-          attachmentIDBack: null,
-          attachmentUtility: null,
-        };
-
-        // Decrypt complainant attachments if they exist
-        try {
-          if (c.attachmentIDFront) {
-            const decryptedBuffer = await decryptBuffer(c.attachmentIDFront);
-            enrichedComplainant.attachmentIDFront =
-              await bufferToBase64DataUrl(decryptedBuffer);
+        for (const key of [
+          "attachmentIDFront",
+          "attachmentIDBack",
+          "attachmentUtility",
+        ]) {
+          if (c[key]) {
+            try {
+              const buf = await decryptBuffer(c[key]);
+              enrichedComplainant[key] = await bufferToBase64DataUrl(buf);
+            } catch {
+              enrichedComplainant[key] = null;
+            }
+          } else {
+            enrichedComplainant[key] = null;
           }
-        } catch (error) {
-          console.warn("Failed to decrypt ID front attachment:", error);
-        }
-
-        try {
-          if (c.attachmentIDBack) {
-            const decryptedBuffer = await decryptBuffer(c.attachmentIDBack);
-            enrichedComplainant.attachmentIDBack =
-              await bufferToBase64DataUrl(decryptedBuffer);
-          }
-        } catch (error) {
-          console.warn("Failed to decrypt ID back attachment:", error);
-        }
-
-        try {
-          if (c.attachmentUtility) {
-            const decryptedBuffer = await decryptBuffer(c.attachmentUtility);
-            enrichedComplainant.attachmentUtility =
-              await bufferToBase64DataUrl(decryptedBuffer);
-          }
-        } catch (error) {
-          console.warn("Failed to decrypt utility attachment:", error);
         }
 
         return {
@@ -231,8 +193,6 @@ export async function GET(request) {
         };
       })
     );
-
-    const totalCount = await prisma.complaint.count({ where });
 
     return NextResponse.json({
       success: true,
@@ -250,7 +210,5 @@ export async function GET(request) {
       { success: false, error: "Failed to fetch complaints" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

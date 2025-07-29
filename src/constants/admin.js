@@ -23,7 +23,7 @@ export const ADMIN_NAV_LINKS = [
     label: "Blotters",
     href: "/admin/blotters",
     icon: <GavelRounded fontSize="small" />,
-    requiredRole: null,
+    requiredRole: "ADMIN",
   },
   {
     label: "Users",

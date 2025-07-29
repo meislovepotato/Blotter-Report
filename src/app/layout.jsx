@@ -3,7 +3,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "@/styles/theme";
 import { getBarangayInfoServer } from "@/lib";
-import { FloatingTrackModal } from "../components";
+import { SocketProvider } from "@/context";
 import { FakeSMSProvider } from "@/context/FakeSMSContext";
 
 export async function generateMetadata() {
@@ -16,6 +16,9 @@ export async function generateMetadata() {
       default: `Barangay ${barangayName}`,
     },
     description: `Official Complaint Reporting Page of Barangay ${barangayName}`,
+    icons: {
+      icon: "/favicon.ico",
+    },
   };
 }
 
@@ -23,13 +26,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <FakeSMSProvider>
+        <SocketProvider>
+          <FakeSMSProvider>
           <ThemeProvider theme={theme}>
-            <CssBaseline />
-            {children}
-            <FloatingTrackModal />
-          </ThemeProvider>
-        </FakeSMSProvider>
+              <CssBaseline />
+              {children}
+              </ThemeProvider>
+          </FakeSMSProvider>
+        </SocketProvider>
       </body>
     </html>
   );

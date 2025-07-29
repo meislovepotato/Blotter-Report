@@ -1,4 +1,7 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  allowedDevOrigins:
+    process.env.NEXT_PUBLIC_ALLOWED_DEV_ORIGINS?.split(",") || [],
+};
 
 export default nextConfig;

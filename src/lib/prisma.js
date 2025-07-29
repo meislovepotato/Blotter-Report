@@ -1,3 +1,4 @@
+// lib/prisma.js
 import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis;
@@ -8,4 +9,11 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
-export default prisma;
+async function ensurePrismaConnected() {
+  if (!prisma._isConnected) {
+    await prisma.$connect();
+    prisma._isConnected = true;
+  }
+}
+
+export { prisma, ensurePrismaConnected };

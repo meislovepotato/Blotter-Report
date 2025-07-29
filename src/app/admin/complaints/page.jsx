@@ -1,18 +1,11 @@
-"use client";
+import { FullComplaintsView } from "@/components";
 
-import { ComplaintsOverview } from "@/components";
-import { useUser } from "@/context";
+export const metadata = {
+  title: "Complaints",
+};
 
 const FullComplaints = () => {
-  const user = useUser();
-  return (
-    <div className="h-full p-4 rounded-2xl bg-background shadow-2xl shadow-text/10">
-      <ComplaintsOverview
-        isCompact={false}
-        dashboardRole={user?.dashboardRole}
-      />
-    </div>
-  );
+  return <FullComplaintsView />;
 };
 
 export default FullComplaints;

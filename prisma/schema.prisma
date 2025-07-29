@@ -74,41 +74,47 @@ enum HierarchyRole {
   SK_CHAIR
   SECRETARY
   CLERK
+  TANOD
 }
 
 model Barangay {
-  id          String    @id @default(cuid())
-  name        String    @default("Barangay 123")
+  id          String   @id @default(cuid())
+  name        String   @default("Barangay 123")
   logoUrl     String?
-  location    String    @default("Tondo, Manila")
-  address     String    @default("Zone 10, District 1, Manila City")
-  hotline     String    @default("(02) 8765 4321")
-  email       String    @default("barangay123@tondo.gov.ph")
-  officeHours String    @default("Monday–Friday, 8:00 AM to 5:00 PM")
-  updatedAt   DateTime  @updatedAt
+  location    String   @default("Tondo, Manila")
+  address     String   @default("Zone 10, District 1, Manila City")
+  hotline     String   @default("(02) 8765 4321")
+  email       String   @default("barangay123@tondo.gov.ph")
+  officeHours String   @default("Monday–Friday, 8:00 AM to 5:00 PM")
+  updatedAt   DateTime @updatedAt
 }
 
 model PendingAdmin {
-  id          String    @id @default(uuid())
-  name        String
-  email       String    @unique
-  phoneNumber String    @unique
-  password    String
-  createdAt   DateTime  @default(now())
+  id            String        @id @default(uuid())
+  name          String
+  email         String        @unique
+  phoneNumber   String        @unique
+  password      String
+  dashboardRole DashboardRole
+  hierarchyRole HierarchyRole
+  createdAt     DateTime      @default(now())
 }
 
 model Admin {
-  id                  String        @id
-  name                String
-  email               String        @unique
-  phoneNumber         String        @unique
-  password            String
-  dashboardRole       DashboardRole @default(STAFF)
-  hierarchyRole       HierarchyRole @default(CLERK)
-  createdAt           DateTime      @default(now())
+  id            String        @id
+  name          String
+  email         String        @unique
+  phoneNumber   String        @unique
+  password      String
+  dashboardRole DashboardRole
+  hierarchyRole HierarchyRole
+  createdAt     DateTime      @default(now())
 
-  reviewedComplaints  Complaint[]   @relation("ReviewedComplaints")
-  updatedBlotters     Blotter[]     @relation("UpdatedBlotters")
+  reviewedComplaints Complaint[] @relation("ReviewedComplaints")
+  updatedBlotters    Blotter[]   @relation("UpdatedBlotters")
+
+  complaintEvents ComplaintEvent[] @relation("ComplaintEventAdmin")
+  blotterEvents   BlotterEvent[]   @relation("BlotterEventAdmin")
 }
 
 model Complainant {
@@ -124,75 +130,105 @@ model Complainant {
   attachmentIDBack  Bytes?
   attachmentUtility Bytes?
 
-  complaints        Complaint[]
-  blotters          Blotter[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  complaints Complaint[]
+  blotters   Blotter[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 }
 
 model Complaint {
-  id                String                  @id @default(cuid())
-  trackingId        String                  @unique
-  description       String                  @db.Text
-  category          BlotterCategory
-  incidentDateTime  DateTime
-  location          String?
-  subjectName       String?
-  subjectContext    String?                 @db.Text
-  attachments       ComplaintAttachment[]
+  id               String                @id @default(cuid())
+  trackingId       String                @unique
+  description      String                @db.Text
+  category         BlotterCategory
+  incidentDateTime DateTime
+  location         String?
+  subjectName      String?
+  subjectContext   String?               @db.Text
+  attachments      ComplaintAttachment[]
 
-  status            ComplaintStatus         @default(PENDING)
-  severity          SeverityLevel?
-  remarks           String?                 @db.Text
-  complainantId     String
-  complainant       Complainant             @relation(fields: [complainantId], references: [id])
-  createdAt         DateTime                @default(now())
-  updatedAt         DateTime                @updatedAt
+  status        ComplaintStatus @default(PENDING)
+  severity      Int?
+  remarks       String?         @db.Text
+  complainantId String
+  complainant   Complainant     @relation(fields: [complainantId], references: [id])
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   escalatedAt       DateTime?
   deniedAt          DateTime?
   reviewedByAdminId String?
-  reviewedByAdmin   Admin?                  @relation("ReviewedComplaints", fields: [reviewedByAdminId], references: [id])
+  reviewedByAdmin   Admin?    @relation("ReviewedComplaints", fields: [reviewedByAdminId], references: [id])
 
-  blotter           Blotter?                @relation("ComplaintBlotter", fields: [blotterId], references: [id])
-  blotterId         String?                 @unique
+  blotter   Blotter? @relation("ComplaintBlotter", fields: [blotterId], references: [id])
+  blotterId String?  @unique
+
+  events ComplaintEvent[]
 }
 
 model ComplaintAttachment {
-  id           String     @id @default(cuid())
-  file         Bytes
-  complaintId  String
-  complaint    Complaint  @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  file        Bytes
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
 }
 
 model Blotter {
-  id                    String               @id @default(cuid())
-  trackingId            String               @unique
-  status                BlotterStatus        @default(FILED)
-  remarks               String?              @db.Text
+  id         String        @id @default(cuid())
+  trackingId String        @unique
+  status     BlotterStatus @default(FILED)
+  remarks    String?       @db.Text
 
-  description           String               @db.Text
-  category              BlotterCategory
-  incidentDateTime      DateTime
-  location              String?
-  subjectName           String?
-  subjectContext        String?              @db.Text
-  attachments   BlotterAttachment[]
+  description      String              @db.Text
+  category         BlotterCategory
+  incidentDateTime DateTime
+  location         String?
+  subjectName      String?
+  subjectContext   String?             @db.Text
+  attachments      BlotterAttachment[]
 
-  complainantId         String
-  complainant           Complainant          @relation(fields: [complainantId], references: [id])
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
-  fromComplaint         Complaint?           @relation("ComplaintBlotter")
+  complainantId String
+  complainant   Complainant @relation(fields: [complainantId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  fromComplaint Complaint?  @relation("ComplaintBlotter")
 
-  resolvedAt            DateTime?
-  updatedByAdminId      String?
-  updatedByAdmin        Admin?               @relation("UpdatedBlotters", fields: [updatedByAdminId], references: [id])
+  resolvedAt       DateTime?
+  updatedByAdminId String?
+  updatedByAdmin   Admin?    @relation("UpdatedBlotters", fields: [updatedByAdminId], references: [id])
+
+  events BlotterEvent[]
 }
 
 model BlotterAttachment {
-  id          String  @id @default(cuid())
-  file        Bytes
-  blotterId   String
-  blotter     Blotter @relation(fields: [blotterId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  file      Bytes
+  blotterId String
+  blotter   Blotter @relation(fields: [blotterId], references: [id], onDelete: Cascade)
+}
+
+model ComplaintEvent {
+  id          String    @id @default(cuid())
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  complaintId String
+
+  action String
+
+  admin   Admin?  @relation("ComplaintEventAdmin", fields: [adminId], references: [id])
+  adminId String?
+
+  createdAt DateTime @default(now())
+}
+
+model BlotterEvent {
+  id        String  @id @default(cuid())
+  blotter   Blotter @relation(fields: [blotterId], references: [id])
+  blotterId String
+
+  action String
+
+  admin   Admin  @relation("BlotterEventAdmin", fields: [adminId], references: [id])
+  adminId String
+
+  createdAt DateTime @default(now())
 }

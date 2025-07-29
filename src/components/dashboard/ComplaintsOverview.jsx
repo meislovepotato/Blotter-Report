@@ -1,35 +1,43 @@
 "use client";
-import { useEffect, useState } from "react";
-import { ComplaintDetailModal, DataTable, FilterBar } from "@/components";
+import { useEffect, useRef, useState } from "react";
+import {
+  DataTable,
+  FeedbackSnackbar,
+  FilterBar,
+  ReportDetailModal,
+} from "@/components";
 import {
   AVATAR_COLORS,
   BLOTTER_CATEGORIES,
+  CATEGORY_COLORS,
   DEFAULT_FALLBACK_COLOR,
+  STATUS_STYLES,
 } from "@/constants";
 import { useRouter } from "next/navigation";
 import { VisibilityRounded } from "@mui/icons-material";
-import { Alert, Snackbar } from "@mui/material";
+import { useSocket } from "@/context";
 
-// === deterministic avatar color helper ===
 const getDeterministicAvatarColor = (id, colorsArray) => {
   if (!id || (typeof id !== "string" && typeof id !== "number")) {
     return DEFAULT_FALLBACK_COLOR;
   }
-
   let hash = 0;
   if (typeof id === "string") {
     for (let i = 0; i < id.length; i++) {
       hash = id.charCodeAt(i) + ((hash << 5) - hash);
     }
-  } else if (typeof id === "number") {
+  } else {
     hash = id;
   }
-
   const index = Math.abs(hash) % colorsArray.length;
   return colorsArray[index];
 };
 
-const classifySeverity = (complaint) => complaint.severity || null;
+const classifySeverity = (complaint) => {
+  if (complaint.status === "ESCALATED" || complaint.status === "RESOLVED")
+    return null;
+  return complaint.severity || null;
+};
 
 const ComplaintsOverview = ({
   isCompact = false,
@@ -51,7 +59,9 @@ const ComplaintsOverview = ({
     dateFrom: "",
     dateTo: "",
   });
-
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
+  const [limit, setLimit] = useState(10);
+  const containerRef = useRef(null);
   const router = useRouter();
 
   const showSnackbar = (message, severity = "success") => {
@@ -62,49 +72,76 @@ const ComplaintsOverview = ({
     try {
       const endpoint =
         actionType === "ESCALATED"
-          ? "/api/complaint/escalate"
-          : "/api/complaint/status";
+          ? `/api/complaint/escalate/${complaintId}`
+          : `/api/complaint/update-status/${complaintId}`;
 
-      const payload =
-        actionType === "ESCALATED"
-          ? { complaintId }
-          : { complaintId, status: actionType };
+      const payload = { status: actionType };
+      console.log("Complaint ID:", complaintId);
 
       const res = await fetch(endpoint, {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(payload),
       });
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Unknown error");
 
-      showSnackbar("Update successful.");
+      if (!res.ok) {
+        throw new Error(result.error || "Update failed");
+      }
+
+      const statusMessages = {
+        REJECT: "Complaint rejected successfully",
+        REJECTED: "Complaint rejected successfully",
+        IN_PROGRESS: "Complaint marked as in progress",
+        RESOLVED: "Complaint marked as resolved",
+        ESCALATION_REQUESTED: "Escalation requested successfully",
+        ESCALATED: "Complaint escalated to blotter successfully",
+      };
+
+      const message =
+        statusMessages[actionType] || "Status updated successfully";
+      showSnackbar(message);
       setSelectedComplaint(null);
+      fetchComplaints(false, pagination.page, limit);
     } catch (err) {
       console.error("Update failed:", err);
       showSnackbar(`Update failed: ${err.message}`, "error");
     }
   };
 
-  const fetchComplaints = async (showLoading = false) => {
+  const fetchComplaints = async (
+    showLoading = false,
+    page = 1,
+    limitVal = 10
+  ) => {
     if (showLoading) setLoading(true);
-
     try {
-      const response = await fetch("/api/complaint?include=complainant");
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error || "Unknown error");
+      const response = await fetch(
+        `/api/complaint?page=${page}&limit=${limitVal}`,
+        { credentials: "include" }
+      );
 
-      // Inject severity field per complaint
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch complaints");
+      }
+
       const withSeverity = (result.data || []).map((item) => ({
         ...item,
         severity: classifySeverity(item),
       }));
 
       setComplaints(withSeverity);
+      setPagination({
+        page: result.pagination.page,
+        totalPages: result.pagination.totalPages,
+      });
     } catch (error) {
       console.error("Fetch failed:", error);
+      showSnackbar("Failed to fetch complaints", "error");
     } finally {
       if (showLoading) setLoading(false);
       if (isInitialLoad) {
@@ -115,40 +152,63 @@ const ComplaintsOverview = ({
   };
 
   useEffect(() => {
-    fetchComplaints(true); // Initial load
+    if (!isCompact) {
+      const observer = new ResizeObserver(() => {
+        if (containerRef.current) {
+          const height = containerRef.current.offsetHeight;
+          const rowHeight = 60;
+          const visibleRows = Math.floor(height / rowHeight);
+          setLimit(visibleRows);
+        }
+      });
+      if (containerRef.current) observer.observe(containerRef.current);
+      return () => observer.disconnect();
+    }
+  }, [isCompact]);
 
-    const interval = setInterval(() => fetchComplaints(false), 5000);
+  useEffect(() => {
+    if (!isCompact && limit > 0) {
+      fetchComplaints(true, 1, limit);
+    } else if (isCompact) {
+      fetchComplaints(true);
+    }
+  }, [limit, isCompact]);
 
-    const channel = new BroadcastChannel("complaint-updates");
-    let debounceTimer = null;
-    channel.onmessage = () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => fetchComplaints(false), 300);
+  const socket = useSocket();
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewComplaint = () => {
+      console.log("Complaint created - refetching...");
+      fetchComplaints(false, pagination.page, limit);
     };
 
+    const handleStatusUpdate = () => {
+      console.log("🔄 Complaint status updated - refetching...");
+      fetchComplaints(false, pagination.page, limit);
+    };
+
+    socket.on("complaint-created", handleNewComplaint);
+    socket.on("complaint-updated", handleStatusUpdate);
     return () => {
-      clearInterval(interval);
-      channel.close();
+      socket.off("complaint-created", handleNewComplaint);
+      socket.off("complaint-updated", handleStatusUpdate);
     };
-  }, []);
+  }, [socket, pagination.page, limit]);
 
   const from = filters.dateFrom ? new Date(filters.dateFrom) : null;
   const to = filters.dateTo ? new Date(filters.dateTo) : null;
-
   const filtered = complaints.filter((c) => {
     const q = filters.q.toLowerCase();
     const date = new Date(c.createdAt);
-
     const matchesSearch =
       !filters.q ||
       c.complainant?.lastName.toLowerCase().includes(q) ||
       c.complainant?.firstName.toLowerCase().includes(q) ||
       c.trackingId.toLowerCase().includes(q);
-
     const matchesCat = !filters.category || c.category === filters.category;
     const matchesFrom = !from || date >= from;
     const matchesTo = !to || date <= to;
-
     return matchesSearch && matchesCat && matchesFrom && matchesTo;
   });
 
@@ -163,61 +223,52 @@ const ComplaintsOverview = ({
       header: "Status",
       render: (value) => (
         <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            value === "PENDING"
-              ? "bg-yellow-100 text-yellow-800"
-              : value === "IN_PROGRESS"
-                ? "bg-blue-100 text-blue-800"
-                : value === "ESCALATION_REQUESTED"
-                  ? "bg-orange-100 text-orange-800"
-                  : value === "ESCALATED"
-                    ? "bg-purple-100 text-purple-800"
-                    : value === "RESOLVED"
-                      ? "bg-green-100 text-green-800"
-                      : value === "REJECTED"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-gray-100 text-gray-800"
-          }`}
+          className={`px-2 py-1 rounded-full text-xs ${STATUS_STYLES[value] || STATUS_STYLES.DEFAULT}`}
         >
           {value
-            .toLowerCase()
             .replace(/_/g, " ")
-            .split(" ")
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ")}
+            .toLowerCase()
+            .replace(/\b\w/g, (l) => l.toUpperCase())}
         </span>
       ),
     },
     {
       key: "category",
       header: "Category",
-      render: (value) => BLOTTER_CATEGORIES[value],
+      render: (value) => (
+        <span
+          className={`inline-block px-2 py-1 rounded-full font-medium ${CATEGORY_COLORS[value] || "bg-gray-100 text-gray-700"}`}
+        >
+          {BLOTTER_CATEGORIES[value] || value || "N/A"}
+        </span>
+      ),
     },
     {
       key: "complainant",
       header: "Complainant",
       render: (_, row) => {
-        const firstName = row.complainant?.firstName || "";
-        const lastName = row.complainant?.lastName || "";
-        const middleName = row.complainant?.middleName || "";
-        const phoneNumber = row.complainant?.phoneNumber;
+        const {
+          firstName = "",
+          lastName = "",
+          middleName = "",
+          phoneNumber,
+        } = row.complainant || {};
         const initials =
           `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase();
         const avatarColorClass = getDeterministicAvatarColor(
           row.complainant?.id,
           AVATAR_COLORS
         );
-
         return (
           <div className="flex items-center space-x-2">
             <div
-              className={`flex-shrink-0 w-8 h-8 rounded-full text-white flex items-center justify-center text-sm font-semibold ${avatarColorClass}`}
+              className={`w-8 h-8 rounded-full text-white flex items-center justify-center text-sm font-semibold ${avatarColorClass}`}
             >
               {initials}
             </div>
             <div>
               <div className="text-xs font-medium text-text">
-                {`${lastName}, ${firstName} ${middleName}`.trim()}
+                {`${lastName}, ${firstName} ${middleName || ""}`.trim()}
               </div>
               {phoneNumber && (
                 <div className="text-[0.625rem] text-text opacity-50">
@@ -268,6 +319,7 @@ const ComplaintsOverview = ({
                     setSelectedComplaint(row);
                   }}
                   className="text-primary px-2 items-center hover:text-accent cursor-pointer"
+                  title="View details"
                 >
                   <VisibilityRounded />
                 </button>
@@ -277,7 +329,7 @@ const ComplaintsOverview = ({
   ];
 
   return (
-    <>
+    <div className="flex flex-col flex-1 h-full gap-4">
       {!isCompact && (
         <FilterBar
           filters={filters}
@@ -286,37 +338,61 @@ const ComplaintsOverview = ({
           onClear={() => setFilters({ q: "", category: "", severity: "" })}
         />
       )}
-      <DataTable
-        data={filtered}
-        columns={columns}
-        isCompact={isCompact}
-        isViewable={isViewable}
-        viewMore={() => router.push("/admin/complaints")}
-        title="Complaints Overview"
-        loading={loading}
-      />
+      <div
+        ref={containerRef}
+        className="flex flex-col flex-1 h-full justify-between"
+      >
+        <DataTable
+          data={filtered}
+          columns={columns}
+          isCompact={isCompact}
+          isViewable={isViewable}
+          viewMore={() => router.push("/admin/complaints")}
+          title="Complaints Overview"
+          loading={loading}
+        />
+        {!isCompact && (
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              disabled={pagination.page === 1}
+              onClick={() =>
+                setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
+              }
+              className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="px-3 py-1 text-sm text-gray-600">
+              Page {pagination.page} of {pagination.totalPages}
+            </span>
+            <button
+              disabled={pagination.page === pagination.totalPages}
+              onClick={() =>
+                setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
+              }
+              className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
       {selectedComplaint && (
-        <ComplaintDetailModal
-          complaint={selectedComplaint}
+        <ReportDetailModal
+          type="complaint"
+          data={selectedComplaint}
           adminRole={dashboardRole}
           onClose={() => setSelectedComplaint(null)}
           onAction={handleAction}
         />
       )}
-      <Snackbar
+      <FeedbackSnackbar
         open={snackbar.open}
-        autoHideDuration={4000}
+        message={snackbar.message}
+        severity={snackbar.severity}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </>
+      />
+    </div>
   );
 };
 

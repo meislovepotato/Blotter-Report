@@ -1,31 +1,7 @@
 "use client";
-import { SeverityLevel } from "@/constants";
 import { useState, useEffect, useRef } from "react";
-
-const severityColorMap = {
-  [SeverityLevel.EMERGENCY]: "bg-red-100/40",
-  [SeverityLevel.URGENT]: "bg-orange-100/40",
-  [SeverityLevel.MODERATE]: "bg-yellow-100/40",
-  [SeverityLevel.MINOR]: "bg-green-100/40",
-  [SeverityLevel.INFORMATIONAL]: "bg-gray-100/40",
-};
-
-const severityHoverMap = {
-  [SeverityLevel.EMERGENCY]: "hover:bg-red-200/60",
-  [SeverityLevel.URGENT]: "hover:bg-orange-200/60",
-  [SeverityLevel.MODERATE]: "hover:bg-yellow-200/60",
-  [SeverityLevel.MINOR]: "hover:bg-green-200/60",
-  [SeverityLevel.INFORMATIONAL]: "hover:bg-gray-200/60",
-};
-
-const SEVERITY_ORDER = {
-  [SeverityLevel.EMERGENCY]: 5,
-  [SeverityLevel.URGENT]: 4,
-  [SeverityLevel.MODERATE]: 3,
-  [SeverityLevel.MINOR]: 2,
-  [SeverityLevel.INFORMATIONAL]: 1,
-  null: 0,
-};
+import { SEVERITY_COLOR_MAP, SEVERITY_HOVER_MAP } from "@/constants";
+import { CircularProgress } from "@mui/material";
 
 const DataTable = ({
   data = [],
@@ -45,10 +21,9 @@ const DataTable = ({
 
   const safeData = Array.isArray(data) ? data : [];
 
-  // Sort by severity (descending), then fallback to createdAt if needed
   const sortedData = [...safeData].sort((a, b) => {
-    const aSeverity = SEVERITY_ORDER[a.severity] ?? 0;
-    const bSeverity = SEVERITY_ORDER[b.severity] ?? 0;
+    const aSeverity = a.severity ?? 0;
+    const bSeverity = b.severity ?? 0;
 
     if (aSeverity !== bSeverity) {
       return bSeverity - aSeverity;
@@ -97,8 +72,18 @@ const DataTable = ({
     };
   }, [data, columns, isCompact, maxRows]);
 
-  const getSeverityClass = (severity) => {
-    return severityColorMap[severity] || "";
+  const getSeverityClass = (row) => {
+    if (row.status === "ESCALATED") return "bg-gray-100";
+    return SEVERITY_COLOR_MAP[row.severity] || "";
+  };
+
+  const getHoverClass = (row) => {
+    if (row.status === "ESCALATED") return "hover:bg-gray-200";
+    return SEVERITY_HOVER_MAP[row.severity] || "hover:bg-secondary/10";
+  };
+
+  const getTextClass = (row) => {
+    return row.status === "ESCALATED" ? "text-gray-500" : "text-text";
   };
 
   return (
@@ -137,7 +122,7 @@ const DataTable = ({
       <div className="overflow-auto h-full">
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-transparent"></div>
+            <CircularProgress />
           </div>
         ) : (
           <table className="w-full text-sm">
@@ -160,11 +145,11 @@ const DataTable = ({
             </thead>
             <tbody>
               {displayData.map((row, idx) => {
-                const severityClass = getSeverityClass(row.severity);
+                const severityClass = getSeverityClass(row);
+                const hoverClass = getHoverClass(row);
+                const textClass = getTextClass(row);
                 const fallbackBg =
                   !severityClass && idx % 2 === 1 ? "bg-text/5" : "";
-                const hoverClass =
-                  severityHoverMap[row.severity] || "hover:bg-secondary/10";
 
                 return (
                   <tr
@@ -174,7 +159,7 @@ const DataTable = ({
                     onClick={() => onRowClick?.(row)}
                   >
                     {columns.map((col, colIdx) => (
-                      <td key={colIdx} className="p-2 text-text">
+                      <td key={colIdx} className={`p-2 ${textClass}`}>
                         {col.render
                           ? col.render(row[col.key], row)
                           : row[col.key]}

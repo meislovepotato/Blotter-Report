@@ -43,8 +43,7 @@ export default async function AdminLayout({ children }) {
           <div className="flex flex-col h-screen col-span-10 py-4 gap-2">
             <DashboardHeader name={user.name} role={user.hierarchyRole} />
             <main className="box-border h-full relative">
-              {/* Client-side wrapper with role checks */}
-              <AdminClientWrapper user={user}>{children}</AdminClientWrapper>
+                <AdminClientWrapper user={user}>{children}</AdminClientWrapper>
             </main>
           </div>
         </div>
