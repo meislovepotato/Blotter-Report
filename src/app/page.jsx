@@ -13,6 +13,7 @@ import {
   MailRounded,
   PersonRounded,
 } from "@mui/icons-material";
+import Link from "next/link";
 
 const infoList = [
   {
@@ -104,6 +105,11 @@ const HomePage = () => {
               You can create an account to submit reports or log in to view and
               manage previous reports.
             </p>
+            <div className="mt-4">
+              <Link href="/fake-sms" className="text-blue-600 underline">
+                View Fake SMS Inbox (Demo)
+              </Link>
+            </div>
           </div>
           <div className="bg-secondary/18 backdrop-blur-lg w-full flex flex-col flex-1 h-full gap-2 p-4 rounded-2xl sm:col-span-3 md:max-h-70 md:justify-between">
             <h3 className="text-xl leading-snug font-bold text-text">
