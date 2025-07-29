@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import background from "@/assets/img/background.jpg";
+import Link from "next/link";
 
 import React, { useState } from "react";
 import {
@@ -49,6 +50,11 @@ const HomePage = () => {
               You can create an account to submit reports or log in to view and
               manage previous reports.
             </p>
+            <div className="mt-4">
+              <Link href="/fake-sms" className="text-blue-600 underline">
+                View Fake SMS Inbox (Demo)
+              </Link>
+            </div>
           </div>
           <TrackModal className={`hidden md:flex`} />
         </div>

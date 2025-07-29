@@ -4,6 +4,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import theme from "@/styles/theme";
 import { getBarangayInfoServer } from "@/lib";
 import { SocketProvider } from "@/context";
+import { FakeSMSProvider } from "@/context/FakeSMSContext";
 
 export async function generateMetadata() {
   const barangayInfo = await getBarangayInfoServer();
@@ -26,10 +27,12 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <SocketProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            {children}
-          </ThemeProvider>
+          <FakeSMSProvider>
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
+              {children}
+            </ThemeProvider>
+          </FakeSMSProvider>
         </SocketProvider>
       </body>
     </html>
