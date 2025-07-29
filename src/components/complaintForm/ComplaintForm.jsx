@@ -13,6 +13,7 @@ import { useState } from "react";
 import { Snackbar, Alert } from "@mui/material";
 import { INITIAL_FORM_DATA } from "@/constants";
 import { fileToBase64, stepSchemas } from "@/lib";
+import { useFakeSMS } from "@/context/FakeSMSContext";
 
 const steps = [
   "Personal Info",
@@ -31,6 +32,8 @@ const ComplaintForm = () => {
     message: "",
     severity: "error",
   });
+
+  const { sendFakeSMS } = useFakeSMS();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -102,6 +105,30 @@ const ComplaintForm = () => {
         }
 
         if (!res.ok) throw new Error("Submission failed");
+
+        // --- FAKE SMS LOGIC ---
+        const result = await res.json();
+        // Send to complainant
+        sendFakeSMS({
+          type: "complainant",
+          recipient: formData.phoneNumber || "Complainant",
+          content: `Your complaint has been received. Your tracking ID is: ${result.trackingId}`,
+          meta: { trackingId: result.trackingId },
+        });
+        // Send to admins if Emergency/Urgent
+        if (
+          ["EMERGENCY", "URGENT"].includes(
+            (formData.severity || "").toUpperCase()
+          )
+        ) {
+          sendFakeSMS({
+            type: "admin",
+            recipient: "admin",
+            content: `New ${formData.severity} complaint received. Tracking ID: ${result.trackingId}. Immediate response needed!`,
+            meta: { trackingId: result.trackingId },
+          });
+        }
+        // --- END FAKE SMS LOGIC ---
 
         setSnackbar({
           open: true,

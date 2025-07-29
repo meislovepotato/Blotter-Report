@@ -4,6 +4,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import theme from "@/styles/theme";
 import { getBarangayInfoServer } from "@/lib";
 import { FloatingTrackModal } from "../components";
+import { FakeSMSProvider } from "@/context/FakeSMSContext";
 
 export async function generateMetadata() {
   const barangayInfo = await getBarangayInfoServer();
@@ -22,11 +23,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          {children}
-          <FloatingTrackModal />
-        </ThemeProvider>
+        <FakeSMSProvider>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            {children}
+            <FloatingTrackModal />
+          </ThemeProvider>
+        </FakeSMSProvider>
       </body>
     </html>
   );
