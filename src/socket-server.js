@@ -42,6 +42,12 @@ io.on("connection", (socket) => {
     io.emit("admin-updated", data);
   });
 
+  socket.on("fake-sms", (message) => {
+    console.log("📨 Broadcasting fake SMS:", message);
+    // Broadcast to *all* connected clients
+    io.emit("fake-sms", message);
+  });
+
   socket.on("disconnect", () => {
     console.log("❌ Client disconnected:", socket.id);
   });

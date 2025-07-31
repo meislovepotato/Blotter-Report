@@ -27,7 +27,6 @@ const steps = [
 const ComplaintForm = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
-
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -35,53 +34,46 @@ const ComplaintForm = () => {
   });
 
   const { sendFakeSMS } = useFakeSMS();
-
   const socket = useSocket();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const transformData = { ...formData };
+
     const schema = stepSchemas[activeStep];
-    const parsed = schema.safeParse(transformData);
+    const parsed = schema.safeParse(formData);
 
     if (!parsed.success) {
-      setSnackbar({
+      return setSnackbar({
         open: true,
         message: "Please fill in all required fields.",
         severity: "error",
       });
-      return;
     }
 
-    // Convert attachments to base64
-    if (formData.complaintAttachment?.length) {
-      transformData.complaintAttachment = await Promise.all(
-        formData.complaintAttachment.map((fileObj) =>
-          fileToBase64(fileObj.file)
-        )
-      );
-    }
+    const transformData = { ...formData };
 
-    if (formData.attachmentIDFront) {
-      transformData.attachmentIDFront = await fileToBase64(
-        formData.attachmentIDFront
-      );
-    }
+    try {
+      // Convert file attachments to base64
+      if (transformData.complaintAttachment?.length) {
+        transformData.complaintAttachment = await Promise.all(
+          transformData.complaintAttachment.map((f) => fileToBase64(f.file))
+        );
+      }
 
-    if (formData.attachmentIDBack) {
-      transformData.attachmentIDBack = await fileToBase64(
-        formData.attachmentIDBack
-      );
-    }
+      const fileFields = [
+        "attachmentIDFront",
+        "attachmentIDBack",
+        "attachmentUtility",
+      ];
 
-    if (formData.attachmentUtility) {
-      transformData.attachmentUtility = await fileToBase64(
-        formData.attachmentUtility
-      );
-    }
+      for (const field of fileFields) {
+        if (transformData[field]) {
+          transformData[field] = await fileToBase64(transformData[field]);
+        }
+      }
 
-    if (activeStep === steps.length - 1) {
-      try {
+      // Final step: submit to backend
+      if (activeStep === steps.length - 1) {
         const res = await fetch("/api/complaint", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -90,32 +82,34 @@ const ComplaintForm = () => {
 
         if (!res.ok) throw new Error("Submission failed");
 
-        // --- FAKE SMS LOGIC ---
         const result = await res.json();
-        // Send to complainant
+
+        // FAKE SMS: notify complainant
         sendFakeSMS({
           type: "complainant",
           recipient: formData.phoneNumber || "Complainant",
           content: `Your complaint has been received. Your tracking ID is: ${result.trackingId}`,
           meta: { trackingId: result.trackingId },
         });
-        // Send to admins if Emergency/Urgent
-        if (["EMERGENCY", "URGENT"].includes((formData.severity || "").toUpperCase())) {
+
+        console.log("📱 sending fake SMS to complainant", formData.phoneNumber);
+
+        // FAKE SMS: notify admin for urgent/emergency
+        const severity =
+          typeof formData.severity === "string"
+            ? formData.severity.toUpperCase()
+            : "";
+
+        if (["EMERGENCY", "URGENT"].includes(severity)) {
           sendFakeSMS({
             type: "admin",
             recipient: "admin",
-            content: `New ${formData.severity} complaint received. Tracking ID: ${result.trackingId}. Immediate response needed!`,
+            content: `New ${severity} complaint received. Tracking ID: ${result.trackingId}. Immediate response needed!`,
             meta: { trackingId: result.trackingId },
           });
         }
-        // --- END FAKE SMS LOGIC ---
 
-        setSnackbar({
-          open: true,
-          message: "Complaint submitted successfully!",
-          severity: "success",
-        });
-
+        // Real-time emit
         if (socket) {
           socket.emit("complaint-created", {
             timestamp: Date.now(),
@@ -124,17 +118,26 @@ const ComplaintForm = () => {
           console.log("✅ complaint-created event emitted");
         }
 
-        setFormData(INITIAL_FORM_DATA);
-        setActiveStep(0);
-      } catch (err) {
         setSnackbar({
           open: true,
-          message: "Something went wrong. Please try again.",
-          severity: "error",
+          message: "Complaint submitted successfully!",
+          severity: "success",
         });
+
+        // Reset form
+        setFormData(INITIAL_FORM_DATA);
+        setActiveStep(0);
+      } else {
+        // Move to next step
+        setActiveStep((prev) => prev + 1);
       }
-    } else {
-      setActiveStep((prev) => prev + 1);
+    } catch (err) {
+      console.error("Submission Error:", err);
+      setSnackbar({
+        open: true,
+        message: "Something went wrong. Please try again.",
+        severity: "error",
+      });
     }
   };
 
